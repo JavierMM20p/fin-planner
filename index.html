@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Net Worth Simulator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f7f4ec;
+    --panel: #fdfbf5;
+    --panel-2: #f1ede2;
+    --border: #e5dfce;
+    --border-strong: #d6ceb8;
+    --text: #2b2a27;
+    --text-soft: #403d37;
+    --muted: #7a746a;
+    --accent: #3f7a5a;
+    --accent-hover: #34654b;
+    --accent-soft: #e4ecdf;
+    --accent-2: #8a6d3b;
+    --accent-3: #6b5a8a;
+    --danger: #b44a3a;
+    --grid: rgba(229,223,206,0.6);
+    --shadow: 0 1px 2px rgba(60, 50, 30, 0.04), 0 4px 14px rgba(60, 50, 30, 0.05);
+  }
+  [data-theme="dark"] {
+    --bg: #1a1915;
+    --panel: #242320;
+    --panel-2: #2e2c28;
+    --border: #3a3733;
+    --border-strong: #4a463f;
+    --text: #ece8dd;
+    --text-soft: #c9c3b3;
+    --muted: #8a8575;
+    --accent: #6ba888;
+    --accent-hover: #82bd9e;
+    --accent-soft: #2e3a33;
+    --accent-2: #b8976a;
+    --accent-3: #9a8cb8;
+    --danger: #d77062;
+    --grid: rgba(74,70,63,0.55);
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.25);
+  }
+  body { transition: background 0.2s, color 0.2s; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .app { display: grid; grid-template-columns: 420px 1fr; min-height: 100vh; }
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 32px 28px;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+  aside::-webkit-scrollbar { width: 8px; }
+  aside::-webkit-scrollbar-track { background: transparent; }
+  aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+  main { padding: 32px 40px; display: flex; flex-direction: column; gap: 20px; }
+
+  h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 500;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+  }
+  .subtitle { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+  h2 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    margin: 24px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  h2:first-of-type { margin-top: 8px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+
+  input[type="number"], input[type="text"], select {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a746a' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .field { margin-bottom: 12px; }
+  .check { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-soft); margin-bottom: 12px; cursor: pointer; }
+  .check label { margin: 0; color: var(--text-soft); font-weight: 400; cursor: pointer; }
+  .inline-actions { display: flex; gap: 6px; align-items: center; }
+
+  button {
+    background: var(--accent);
+    color: #fdfbf5;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:active { transform: translateY(1px); }
+  button.secondary { background: transparent; border: 1px solid var(--border-strong); color: var(--text-soft); }
+  button.secondary:hover { background: var(--panel-2); border-color: var(--muted); }
+  button.small { padding: 6px 10px; font-size: 12px; }
+  button.danger { background: transparent; color: var(--danger); padding: 4px 8px; font-size: 16px; line-height: 1; }
+  button.danger:hover { background: rgba(180, 74, 58, 0.08); }
+
+  .bucket {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .bucket-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .bucket-head input { padding: 5px 8px; font-size: 12px; font-weight: 500; background: transparent; border: none; flex: 1; }
+  .bucket-head input:focus { background: var(--panel); }
+  .bucket-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .bucket-grid input { padding: 6px 8px; font-size: 12px; }
+  .bucket-grid label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .bucket-type { margin-top: 6px; font-size: 12px; }
+  .bucket-type select { padding: 6px 8px; font-size: 12px; }
+
+  .expense-row {
+    display: grid;
+    grid-template-columns: 1fr 70px 60px 60px 28px;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .expense-row input, .expense-row select { padding: 6px 8px; font-size: 12px; }
+  .expense-row.recurring { grid-template-columns: 1fr 70px 48px 48px 20px 28px; }
+  .expense-type-toggle { display: flex; gap: 4px; margin-bottom: 6px; }
+  .expense-type-toggle button {
+    padding: 4px 10px; font-size: 11px; flex: 1;
+    background: var(--panel-2); color: var(--muted); border: 1px solid var(--border-strong);
+  }
+  .expense-type-toggle button.active { background: var(--accent); color: #fdfbf5; border-color: var(--accent); }
+
+  .chart-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    flex: 1;
+    min-height: 420px;
+    box-shadow: var(--shadow);
+  }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+  .stat .value {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-top: 8px;
+  }
+  .stat .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 10px;
+    color: var(--accent);
+    margin-left: 6px;
+    font-weight: 500;
+  }
+
+  details {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    background: var(--panel-2);
+  }
+  details summary { cursor: pointer; font-size: 12px; color: var(--muted); font-weight: 500; }
+  details[open] summary { margin-bottom: 6px; }
+  .bracket-table { width: 100%; font-size: 12px; color: var(--text-soft); margin-top: 6px; }
+  .bracket-table td { padding: 3px 0; }
+  .bracket-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 500; }
+
+  .actions { margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .table-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+  }
+  .table-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .table-head h3 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 500;
+    font-size: 17px;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  table.year-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+  table.year-table th { text-align: right; padding: 8px 10px; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+  table.year-table th:first-child, table.year-table td:first-child { text-align: left; }
+  table.year-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text-soft); }
+  table.year-table tr:hover td { background: var(--panel-2); }
+  .scroll-table { max-height: 400px; overflow-y: auto; }
+
+  .scenario-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .scenario-row select { flex: 1; }
+  .overlay-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--panel-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    padding: 3px 8px 3px 10px;
+    font-size: 11px;
+    color: var(--text-soft);
+  }
+  .chip .close { cursor: pointer; color: var(--muted); padding: 0 4px; }
+  .chip .close:hover { color: var(--danger); }
+  .chip .swatch { width: 8px; height: 8px; border-radius: 2px; }
+
+  .mode-tabs { display: flex; gap: 4px; margin-bottom: 12px; background: var(--panel-2); border-radius: 8px; padding: 3px; border: 1px solid var(--border); }
+  .mode-tabs button {
+    flex: 1; padding: 6px 10px; font-size: 12px;
+    background: transparent; color: var(--muted); border: none;
+  }
+  .mode-tabs button.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+  .fire-result {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 10px;
+  }
+  .fire-result .big {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 22px;
+    color: var(--accent);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .fire-result .hint { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+  .fire-result.fail { background: rgba(180, 74, 58, 0.08); border-color: var(--danger); }
+  .fire-result.fail .big { color: var(--danger); }
+
+  .warn { color: var(--danger); font-size: 11px; margin-top: 4px; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  /* Theme toggle */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    color: var(--text-soft);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    z-index: 50;
+    transition: all 0.15s;
+  }
+  .theme-toggle:hover { background: var(--panel-2); transform: rotate(15deg); }
+
+  /* MC stats panel */
+  .mc-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 0;
+  }
+  .mc-stats.hidden { display: none; }
+  .stat.mc-stat .label { color: var(--accent); }
+
+  /* Copy link flash */
+  .flash { background: var(--accent) !important; color: #fff !important; }
+
+  /* Help affordance — injected after any element with data-help */
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-left: 5px;
+    border-radius: 50%;
+    background: var(--panel-2);
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s;
+    vertical-align: middle;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .help-icon:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fdfbf5;
+    transform: scale(1.1);
+  }
+  h2 .help-icon { width: 16px; height: 16px; font-size: 10px; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(43, 42, 39, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(43, 42, 39, 0.2);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal h3 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 500;
+    font-size: 22px;
+    margin: 0 0 14px;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .modal .body { font-size: 14px; line-height: 1.6; color: var(--text-soft); }
+  .modal .body p { margin: 0 0 12px; }
+  .modal .body p:last-child { margin-bottom: 0; }
+  .modal .body strong { color: var(--text); font-weight: 600; }
+  .modal .body em { background: var(--accent-soft); color: var(--accent); padding: 1px 6px; border-radius: 4px; font-style: normal; font-size: 12px; font-weight: 500; }
+  .modal .body code {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .modal .body ul { padding-left: 20px; margin: 8px 0 12px; }
+  .modal .body li { margin-bottom: 4px; }
+  .modal-close {
+    margin-top: 18px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .modal-close button { background: var(--accent); color: #fdfbf5; }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">☾</button>
+
+<div class="modal-backdrop" id="helpModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h3 id="helpTitle"></h3>
+    <div class="body" id="helpBody"></div>
+    <div class="modal-close"><button id="helpClose">Got it</button></div>
+  </div>
+</div>
+
+<div class="app">
+  <aside>
+    <h1>Net Worth</h1>
+    <div class="subtitle">Project your wealth with compound interest, inflation, withdrawals, Monte Carlo, and Spanish capital-gains tax.</div>
+
+    <h2 data-help="scenarios">Scenarios</h2>
+    <div class="scenario-row">
+      <select id="scenarioSelect"><option value="">— current (unsaved) —</option></select>
+      <button class="secondary small" id="loadScenario" title="Load">Load</button>
+    </div>
+    <div class="actions" style="margin-top: 0; gap: 6px;">
+      <button class="secondary small" id="saveScenario">Save as…</button>
+      <button class="secondary small" id="deleteScenario">Delete</button>
+      <button class="secondary small" id="overlayScenario" title="Overlay selected on chart">Overlay</button>
+      <button class="secondary small" id="exportJson">Export</button>
+      <button class="secondary small" id="importJson">Import</button>
+      <button class="secondary small" id="copyLink" title="Copy a shareable link to this scenario">Copy link</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" />
+    </div>
+    <div class="overlay-chips" id="overlayChips"></div>
+
+    <h2 data-help="portfolio">Portfolio</h2>
+    <div class="field">
+      <label data-help="initial">Initial capital (€)</label>
+      <input type="number" id="initial" value="10000" step="100" />
+    </div>
+    <div class="row">
+      <div>
+        <label data-help="monthly">Monthly contribution (€)</label>
+        <input type="number" id="monthly" value="500" step="10" />
+      </div>
+      <div>
+        <label data-help="contribGrowth">Contribution growth / year (%)</label>
+        <input type="number" id="contribGrowth" value="0" step="0.5" />
+      </div>
+    </div>
+    <div class="field">
+      <label data-help="years">Years</label>
+      <input type="number" id="years" value="30" step="1" min="1" max="80" />
+    </div>
+
+    <h2 data-help="buckets">Asset buckets</h2>
+    <div class="hint">Allocations are normalized to 100%. Per-bucket returns and volatility feed the compounding and Monte Carlo models.</div>
+    <div id="buckets" style="margin-top: 10px;"></div>
+    <button class="secondary small" id="addBucket">+ Add bucket</button>
+    <div class="check" style="margin-top: 12px;">
+      <input type="checkbox" id="rebalance" />
+      <label for="rebalance" data-help="rebalance">Rebalance annually (triggers taxable events)</label>
+    </div>
+
+    <h2 data-help="inflation">Inflation</h2>
+    <div class="check">
+      <input type="checkbox" id="inflationOn" checked />
+      <label for="inflationOn" data-help="inflationOn">Adjust for inflation</label>
+    </div>
+    <div class="row">
+      <div>
+        <label data-help="inflation">Annual inflation (%)</label>
+        <input type="number" id="inflation" value="2.5" step="0.1" />
+      </div>
+      <div>
+        <label data-help="displayMode">Display</label>
+        <select id="displayMode">
+          <option value="both">Nominal + Real</option>
+          <option value="nominal">Nominal only</option>
+          <option value="real">Real only</option>
+        </select>
+      </div>
+    </div>
+
+    <h2 data-help="montecarlo">Monte Carlo</h2>
+    <div class="check">
+      <input type="checkbox" id="mcOn" />
+      <label for="mcOn" data-help="montecarlo">Run Monte Carlo (show P10 / P50 / P90)</label>
+    </div>
+    <div class="row">
+      <div>
+        <label data-help="mcRuns">Runs</label>
+        <input type="number" id="mcRuns" value="400" step="50" min="50" max="5000" />
+      </div>
+      <div>
+        <label data-help="mcSeed">Seed (optional)</label>
+        <input type="number" id="mcSeed" value="42" step="1" />
+      </div>
+    </div>
+    <div class="check">
+      <input type="checkbox" id="showWorstPaths" />
+      <label for="showWorstPaths" data-help="showWorstPaths">Show worst 5 paths (sequence-of-returns)</label>
+    </div>
+
+    <h2 data-help="mode">Mode</h2>
+    <div class="mode-tabs">
+      <button data-mode="accum" class="active">Accumulation</button>
+      <button data-mode="fire">FIRE solver</button>
+    </div>
+
+    <div id="accumPanel">
+      <div class="row">
+        <div>
+          <label data-help="withdrawal">Monthly withdrawal (€)</label>
+          <input type="number" id="withdrawal" value="0" step="50" />
+        </div>
+        <div>
+          <label data-help="withdrawStart">Start year</label>
+          <input type="number" id="withdrawStart" value="20" step="1" min="0" />
+        </div>
+      </div>
+      <div class="check">
+        <input type="checkbox" id="withdrawReal" />
+        <label for="withdrawReal" data-help="withdrawReal">Keep withdrawal real (inflation-adjusted)</label>
+      </div>
+    </div>
+
+    <div id="firePanel" style="display:none;">
+      <div class="hint">Finds the earliest start year at which the portfolio sustains the target withdrawal for the target duration without depletion.</div>
+      <div class="row">
+        <div>
+          <label data-help="fireTarget">Target monthly withdrawal (€, real)</label>
+          <input type="number" id="fireTarget" value="2500" step="100" />
+        </div>
+        <div>
+          <label data-help="fireDuration">Duration (years)</label>
+          <input type="number" id="fireDuration" value="30" step="1" />
+        </div>
+      </div>
+      <button id="solveFire">Solve</button>
+      <div id="fireResult"></div>
+    </div>
+
+    <h2 data-help="expenses">Expenses</h2>
+    <div id="expenses"></div>
+    <button class="secondary small" id="addExpense">+ Add one-time</button>
+    <button class="secondary small" id="addRecurring">+ Add recurring</button>
+
+    <h2 data-help="taxes">Taxes (Spain)</h2>
+    <div class="check">
+      <input type="checkbox" id="taxOn" checked />
+      <label for="taxOn" data-help="taxOn">Apply capital-gains tax on withdrawals</label>
+    </div>
+    <div class="check">
+      <input type="checkbox" id="fifoLots" checked />
+      <label for="fifoLots" data-help="fifoLots">Use FIFO lot tracking (more accurate)</label>
+    </div>
+    <div class="field">
+      <label data-help="marginalRate">Marginal income tax rate (%)</label>
+      <input type="number" id="marginalRate" value="37" step="1" min="0" max="50" />
+      <div class="hint">Used for pension contribution deduction (capped at €1,500/year) and pension withdrawal tax.</div>
+    </div>
+    <h2 data-help="wealthTax" style="margin-top: 16px;">Wealth tax (Patrimonio)</h2>
+    <div class="check">
+      <input type="checkbox" id="wealthTaxOn" />
+      <label for="wealthTaxOn" data-help="wealthTaxOn">Apply Spanish wealth tax annually</label>
+    </div>
+    <div class="row">
+      <div>
+        <label data-help="wealthExemption">Exemption (€)</label>
+        <input type="number" id="wealthExemption" value="700000" step="10000" />
+      </div>
+      <div>
+        <label data-help="wealthFromPortfolio">Pay from</label>
+        <select id="wealthFromPortfolio">
+          <option value="portfolio">Portfolio</option>
+          <option value="external">External income</option>
+        </select>
+      </div>
+    </div>
+    <details>
+      <summary>Wealth tax brackets (state default)</summary>
+      <table class="bracket-table">
+        <tr><td>0 – 167k €</td><td>0.2%</td></tr>
+        <tr><td>167k – 334k €</td><td>0.3%</td></tr>
+        <tr><td>334k – 668k €</td><td>0.5%</td></tr>
+        <tr><td>668k – 1.34M €</td><td>0.9%</td></tr>
+        <tr><td>1.34M – 2.67M €</td><td>1.3%</td></tr>
+        <tr><td>2.67M – 5.35M €</td><td>1.7%</td></tr>
+        <tr><td>5.35M – 10.7M €</td><td>2.1%</td></tr>
+        <tr><td>&gt; 10.7M €</td><td>3.5%</td></tr>
+      </table>
+    </details>
+
+    <details>
+      <summary>Savings-income brackets (2026)</summary>
+      <table class="bracket-table">
+        <tr><td>0 – 6,000 €</td><td>19%</td></tr>
+        <tr><td>6,000 – 50,000 €</td><td>21%</td></tr>
+        <tr><td>50,000 – 200,000 €</td><td>23%</td></tr>
+        <tr><td>200,000 – 300,000 €</td><td>27%</td></tr>
+        <tr><td>&gt; 300,000 €</td><td>30%</td></tr>
+      </table>
+    </details>
+
+    <div class="actions">
+      <button id="run">Recalculate</button>
+      <button class="secondary" id="reset">Reset</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="stats">
+      <div class="stat">
+        <div class="label">Final Balance <span class="tag" id="tagFinal">nominal</span></div>
+        <div class="value" id="finalBalance">–</div>
+        <div class="sub" id="finalBalanceReal">–</div>
+      </div>
+      <div class="stat">
+        <div class="label">Total Contributed</div>
+        <div class="value" id="totalContributed">–</div>
+        <div class="sub" id="totalContribSub">–</div>
+      </div>
+      <div class="stat">
+        <div class="label">Total Withdrawn (net)</div>
+        <div class="value" id="totalWithdrawn">–</div>
+        <div class="sub" id="totalWithdrawnGross">–</div>
+      </div>
+      <div class="stat">
+        <div class="label">Total Taxes Paid</div>
+        <div class="value" id="totalTax">–</div>
+        <div class="sub" id="totalTaxSub">–</div>
+      </div>
+    </div>
+
+    <div class="mc-stats hidden" id="mcStats">
+      <div class="stat mc-stat">
+        <div class="label">Success Rate</div>
+        <div class="value" id="mcSuccess">–</div>
+        <div class="sub">paths that survived</div>
+      </div>
+      <div class="stat mc-stat">
+        <div class="label">Median Outcome</div>
+        <div class="value" id="mcMedian">–</div>
+        <div class="sub" id="mcMedianSub">P50 final</div>
+      </div>
+      <div class="stat mc-stat">
+        <div class="label">Worst Drawdown</div>
+        <div class="value" id="mcDrawdown">–</div>
+        <div class="sub">max peak-to-trough</div>
+      </div>
+      <div class="stat mc-stat">
+        <div class="label">Median Depletion</div>
+        <div class="value" id="mcDepletion">–</div>
+        <div class="sub" id="mcDepletionSub">among failed paths</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-head">
+        <h3>Year-by-year</h3>
+        <div>
+          <button class="secondary small" id="toggleTable">Show</button>
+          <button class="secondary small" id="exportCsv">Export CSV</button>
+        </div>
+      </div>
+      <div id="tableContainer" style="display:none;"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// =====================================================================
+// Spanish tax constants
+// =====================================================================
+const SPAIN_SAVINGS_BRACKETS = [
+  { up: 6000,    rate: 0.19 },
+  { up: 50000,   rate: 0.21 },
+  { up: 200000,  rate: 0.23 },
+  { up: 300000,  rate: 0.27 },
+  { up: Infinity,rate: 0.30 },
+];
+const PENSION_DEDUCTION_CAP = 1500; // € per year, individual plan (2026)
+
+// Spanish wealth tax (Impuesto sobre el Patrimonio) — state default brackets.
+// Applied annually to taxable wealth = total net worth - exemption.
+const SPAIN_WEALTH_BRACKETS = [
+  { up: 167129.45,   rate: 0.002 },
+  { up: 334252.88,   rate: 0.003 },
+  { up: 668499.75,   rate: 0.005 },
+  { up: 1336999.51,  rate: 0.009 },
+  { up: 2673999.01,  rate: 0.013 },
+  { up: 5347998.03,  rate: 0.017 },
+  { up: 10695996.06, rate: 0.021 },
+  { up: Infinity,    rate: 0.035 },
+];
+function wealthTaxOn(taxableWealth) {
+  if (taxableWealth <= 0) return 0;
+  let tax = 0, prev = 0;
+  for (const b of SPAIN_WEALTH_BRACKETS) {
+    const slice = Math.min(taxableWealth, b.up) - prev;
+    if (slice <= 0) break;
+    tax += slice * b.rate;
+    prev = b.up;
+    if (taxableWealth <= b.up) break;
+  }
+  return tax;
+}
+
+function taxOnGains(gains) {
+  if (gains <= 0) return 0;
+  let tax = 0, prev = 0;
+  for (const b of SPAIN_SAVINGS_BRACKETS) {
+    const slice = Math.min(gains, b.up) - prev;
+    if (slice <= 0) break;
+    tax += slice * b.rate;
+    prev = b.up;
+    if (gains <= b.up) break;
+  }
+  return tax;
+}
+function incrementalTax(ytdGains, addGain) {
+  return taxOnGains(ytdGains + addGain) - taxOnGains(ytdGains);
+}
+
+// =====================================================================
+// Seeded RNG + Box–Muller (log-normal returns for Monte Carlo)
+// =====================================================================
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function() {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function normalPair(rng) {
+  const u1 = Math.max(rng(), 1e-12);
+  const u2 = rng();
+  const r = Math.sqrt(-2 * Math.log(u1));
+  return [r * Math.cos(2 * Math.PI * u2), r * Math.sin(2 * Math.PI * u2)];
+}
+
+// =====================================================================
+// Bucket simulation with FIFO lot tracking
+// Each bucket tracks a price per unit (starts at 1, grows by monthly rate)
+// and a queue of lots {units, costBasis}.
+// =====================================================================
+function makeBucket(cfg) {
+  return {
+    cfg,                 // {name, allocation, rate, vol, type}
+    price: 1,
+    units: 0,
+    lots: [],            // FIFO queue
+    totalContributed: 0,
+  };
+}
+function bucketBalance(b) { return b.units * b.price; }
+function bucketCostBasis(b) {
+  return b.lots.reduce((s, l) => s + l.costBasis, 0);
+}
+
+function grow(b, monthlyRate) {
+  b.price *= (1 + monthlyRate);
+}
+
+function buy(b, amount) {
+  if (amount <= 0) return;
+  const u = amount / b.price;
+  b.units += u;
+  b.lots.push({ units: u, costBasis: amount });
+  b.totalContributed += amount;
+}
+
+// Sell `amount` (€ value) — returns { gain, proceeds, basisSold }
+// If useFifo=false, sells using proportional cost basis (original behavior).
+function sell(b, amount, useFifo) {
+  const bal = bucketBalance(b);
+  if (amount <= 0 || bal <= 0) return { gain: 0, proceeds: 0, basisSold: 0 };
+  const actual = Math.min(amount, bal);
+  let unitsToSell = actual / b.price;
+
+  if (!useFifo) {
+    const basisSold = bucketCostBasis(b) * (unitsToSell / b.units);
+    const gain = actual - basisSold;
+    // Reduce lots proportionally
+    const frac = (b.units - unitsToSell) / b.units;
+    b.lots = b.lots.map(l => ({ units: l.units * frac, costBasis: l.costBasis * frac }))
+                   .filter(l => l.units > 1e-12);
+    b.units -= unitsToSell;
+    return { gain, proceeds: actual, basisSold };
+  }
+
+  let proceeds = 0, basisSold = 0;
+  while (unitsToSell > 1e-12 && b.lots.length > 0) {
+    const lot = b.lots[0];
+    const take = Math.min(lot.units, unitsToSell);
+    const takeFrac = take / lot.units;
+    const takeBasis = lot.costBasis * takeFrac;
+    const takeProceeds = take * b.price;
+    proceeds += takeProceeds;
+    basisSold += takeBasis;
+    lot.units -= take;
+    lot.costBasis -= takeBasis;
+    unitsToSell -= take;
+    if (lot.units < 1e-12) b.lots.shift();
+  }
+  b.units -= (actual / b.price) - unitsToSell;
+  return { gain: proceeds - basisSold, proceeds, basisSold };
+}
+
+// =====================================================================
+// Full simulation (one deterministic run, or one MC path via rateOverrides)
+// =====================================================================
+function simulate(cfg, rateOverrides = null) {
+  const months = cfg.years * 12;
+  const infM = Math.pow(1 + cfg.inflation, 1 / 12) - 1;
+  const contribGrowthM = Math.pow(1 + cfg.contribGrowth, 1 / 12) - 1;
+
+  // Normalize allocations
+  const totalAlloc = cfg.buckets.reduce((s, b) => s + b.allocation, 0) || 1;
+  const buckets = cfg.buckets.map(bc => makeBucket({
+    ...bc,
+    allocationNorm: bc.allocation / totalAlloc,
+    monthlyRate: Math.pow(1 + bc.rate, 1 / 12) - 1,
+    monthlyVol: bc.vol / Math.sqrt(12),
+  }));
+
+  // Seed initial capital by allocation
+  for (const b of buckets) buy(b, cfg.initial * b.cfg.allocationNorm);
+
+  let contribution = cfg.monthly;
+  let withdrawal = cfg.withdrawal;
+  let inflationFactor = 1;
+
+  let totalContributed = cfg.initial;
+  let totalWithdrawnGross = 0;
+  let totalWithdrawnNet = 0;
+  let totalTaxSavings = 0;  // pension deduction refunds
+  let totalCapGainsTax = 0;
+  let totalPensionIncomeTax = 0;
+  let totalWealthTax = 0;
+
+  let ytdGains = 0;
+  let ytdPensionContribs = 0;
+  let currentYear = 0;
+
+  const labels = ['Y0'];
+  const snapshots = {
+    nominal: [cfg.initial],
+    real: [cfg.initial],
+    contributed: [cfg.initial],
+    yearly: [],
+  };
+
+  // Flatten expenses into per-month lookups
+  const expByMonth = new Map();
+  for (const e of cfg.expenses) {
+    if (e.recurring) {
+      let amt = e.amount;
+      for (let m = e.startMonth; m <= e.endMonth && m <= months; m++) {
+        if (m < 1) continue;
+        expByMonth.set(m, (expByMonth.get(m) || 0) + amt);
+        if (e.inflationIndexed) amt *= (1 + infM);
+      }
+    } else {
+      if (e.month >= 1 && e.month <= months) {
+        expByMonth.set(e.month, (expByMonth.get(e.month) || 0) + e.amount);
+      }
+    }
+  }
+
+  const useFifo = cfg.fifoLots;
+
+  // Helper: sell `amount` total across all buckets proportionally
+  function sellAcross(amount) {
+    const totalBal = buckets.reduce((s, b) => s + bucketBalance(b), 0);
+    if (totalBal <= 0) return { gain: 0, pensionIncome: 0, proceeds: 0 };
+    const actual = Math.min(amount, totalBal);
+    let totalGain = 0, totalPensionIncome = 0, totalProceeds = 0;
+    for (const b of buckets) {
+      const share = (bucketBalance(b) / totalBal) * actual;
+      const r = sell(b, share, useFifo);
+      if (b.cfg.type === 'pension') {
+        // Entire withdrawal from pension is ordinary income in Spain
+        totalPensionIncome += r.proceeds;
+      } else {
+        totalGain += r.gain;
+      }
+      totalProceeds += r.proceeds;
+    }
+    return { gain: totalGain, pensionIncome: totalPensionIncome, proceeds: totalProceeds };
+  }
+
+  for (let m = 1; m <= months; m++) {
+    const yr = Math.floor((m - 1) / 12);
+    if (yr !== currentYear) {
+      currentYear = yr;
+      // End-of-year: apply pension contribution deduction refund
+      const deductible = Math.min(ytdPensionContribs, PENSION_DEDUCTION_CAP);
+      const refund = deductible * cfg.marginalRate;
+      totalTaxSavings += refund;
+      ytdGains = 0;
+      ytdPensionContribs = 0;
+    }
+
+    // 1. Growth
+    for (const b of buckets) {
+      let rate;
+      if (rateOverrides) {
+        rate = rateOverrides[buckets.indexOf(b)][m - 1];
+      } else {
+        rate = b.cfg.monthlyRate;
+      }
+      grow(b, rate);
+    }
+
+    // 2. Contribution (split by allocation)
+    if (contribution > 0) {
+      for (const b of buckets) {
+        const amt = contribution * b.cfg.allocationNorm;
+        buy(b, amt);
+        if (b.cfg.type === 'pension') ytdPensionContribs += amt;
+      }
+      totalContributed += contribution;
+    }
+
+    // 3. Monthly withdrawal
+    const withdrawActive = m > cfg.withdrawStart * 12 && withdrawal > 0;
+    if (withdrawActive) {
+      const r = sellAcross(withdrawal);
+      let tax = 0;
+      if (cfg.taxOn) {
+        tax = incrementalTax(ytdGains, r.gain);
+        ytdGains += r.gain;
+        totalCapGainsTax += tax;
+      }
+      const pensionTax = r.pensionIncome * cfg.marginalRate;
+      totalPensionIncomeTax += pensionTax;
+      totalWithdrawnGross += r.proceeds;
+      totalWithdrawnNet += r.proceeds - tax - pensionTax;
+    }
+
+    // 4. Expenses (treated as withdrawals from portfolio)
+    const expAmt = expByMonth.get(m) || 0;
+    if (expAmt > 0) {
+      const r = sellAcross(expAmt);
+      let tax = 0;
+      if (cfg.taxOn) {
+        tax = incrementalTax(ytdGains, r.gain);
+        ytdGains += r.gain;
+        totalCapGainsTax += tax;
+      }
+      const pensionTax = r.pensionIncome * cfg.marginalRate;
+      totalPensionIncomeTax += pensionTax;
+      totalWithdrawnGross += r.proceeds;
+      totalWithdrawnNet += r.proceeds - tax - pensionTax;
+    }
+
+    // 5. Escalation for next month
+    contribution *= (1 + contribGrowthM);
+    if (cfg.withdrawReal) withdrawal *= (1 + infM);
+    inflationFactor *= (1 + infM);
+
+    // 6. Year-end rebalance
+    if (cfg.rebalance && m % 12 === 0 && buckets.length > 1) {
+      const totalBal = buckets.reduce((s, b) => s + bucketBalance(b), 0);
+      // Figure out excess per bucket
+      const targets = buckets.map(b => totalBal * b.cfg.allocationNorm);
+      for (let i = 0; i < buckets.length; i++) {
+        const b = buckets[i];
+        const excess = bucketBalance(b) - targets[i];
+        if (excess > 0.01) {
+          const r = sell(b, excess, useFifo);
+          if (cfg.taxOn && b.cfg.type !== 'pension') {
+            const tax = incrementalTax(ytdGains, r.gain);
+            ytdGains += r.gain;
+            totalCapGainsTax += tax;
+          }
+          // Re-buy into under-allocated buckets proportional to their shortfall
+          const shortfalls = buckets.map((bb, j) => Math.max(0, targets[j] - bucketBalance(bb)));
+          const totalShort = shortfalls.reduce((s, v) => s + v, 0);
+          if (totalShort > 0) {
+            for (let j = 0; j < buckets.length; j++) {
+              if (shortfalls[j] > 0) {
+                buy(buckets[j], r.proceeds * (shortfalls[j] / totalShort));
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 6.5 Year-end wealth tax (Patrimonio)
+    if (cfg.wealthTaxOn && m % 12 === 0) {
+      const totalBal = buckets.reduce((s, b) => s + bucketBalance(b), 0);
+      const taxable = Math.max(0, totalBal - cfg.wealthExemption);
+      const wTax = wealthTaxOn(taxable);
+      if (wTax > 0) {
+        totalWealthTax += wTax;
+        if (cfg.wealthFromPortfolio) {
+          // Sell from portfolio to fund the tax (realizes cap gains)
+          const r = sellAcross(wTax);
+          if (cfg.taxOn) {
+            const cgTax = incrementalTax(ytdGains, r.gain);
+            ytdGains += r.gain;
+            totalCapGainsTax += cgTax;
+          }
+          const pTax = r.pensionIncome * cfg.marginalRate;
+          totalPensionIncomeTax += pTax;
+        }
+        // If paid externally, no portfolio impact — we just track the liability
+      }
+    }
+
+    // 7. Snapshot at year end
+    if (m % 12 === 0) {
+      const year = m / 12;
+      const bal = buckets.reduce((s, b) => s + bucketBalance(b), 0);
+      labels.push('Y' + year);
+      snapshots.nominal.push(bal);
+      snapshots.real.push(bal / inflationFactor);
+      snapshots.contributed.push(totalContributed);
+      snapshots.yearly.push({
+        year,
+        balance: bal,
+        balanceReal: bal / inflationFactor,
+        contributed: totalContributed,
+        withdrawnGross: totalWithdrawnGross,
+        withdrawnNet: totalWithdrawnNet,
+        taxCap: totalCapGainsTax,
+        taxPension: totalPensionIncomeTax,
+        taxSavings: totalTaxSavings,
+        taxWealth: totalWealthTax,
+      });
+    }
+  }
+
+  // Final-year pension deduction
+  const deductible = Math.min(ytdPensionContribs, PENSION_DEDUCTION_CAP);
+  totalTaxSavings += deductible * cfg.marginalRate;
+
+  const finalBal = buckets.reduce((s, b) => s + bucketBalance(b), 0);
+  return {
+    labels,
+    snapshots,
+    finalNominal: finalBal,
+    finalReal: finalBal / inflationFactor,
+    totalContributed,
+    totalWithdrawnGross,
+    totalWithdrawnNet,
+    totalCapGainsTax,
+    totalPensionIncomeTax,
+    totalTaxSavings,
+    totalWealthTax,
+    inflationFactor,
+    depleted: finalBal <= 0.01 && (cfg.withdrawal > 0 || cfg.expenses.length > 0),
+  };
+}
+
+// =====================================================================
+// Monte Carlo: many runs with sampled monthly returns per bucket
+// Returns percentile bands.
+// =====================================================================
+function monteCarlo(cfg, runs, seed) {
+  const rng = mulberry32(seed);
+  const months = cfg.years * 12;
+  const nYears = cfg.years;
+
+  const paths = [];           // full path per run (nominal balance at each year)
+  const survived = [];        // boolean per run
+  const depletionYears = [];  // year of depletion for failed runs
+  const maxDrawdowns = [];    // max peak-to-trough drawdown per run
+  const yearMatrix = Array.from({ length: nYears + 1 }, () => []);
+
+  for (let run = 0; run < runs; run++) {
+    const rateOverrides = cfg.buckets.map(b => {
+      const mu = Math.log(1 + b.rate) / 12;
+      const sigma = b.vol / Math.sqrt(12);
+      const path = new Array(months);
+      for (let m = 0; m < months; m += 2) {
+        const [z1, z2] = normalPair(rng);
+        const adj = -0.5 * sigma * sigma;
+        path[m] = Math.exp(mu + adj + sigma * z1) - 1;
+        if (m + 1 < months) path[m + 1] = Math.exp(mu + adj + sigma * z2) - 1;
+      }
+      return path;
+    });
+
+    const r = simulate(cfg, rateOverrides);
+    paths.push(r.snapshots.nominal);
+
+    // Depletion check: any year where balance <= 0 and we're withdrawing
+    let depleted = false, depletionYear = null;
+    if (cfg.withdrawal > 0 || cfg.expenses.length > 0) {
+      for (let y = 1; y < r.snapshots.nominal.length; y++) {
+        if (r.snapshots.nominal[y] <= 0.01) {
+          depleted = true;
+          depletionYear = y;
+          break;
+        }
+      }
+    }
+    survived.push(!depleted);
+    if (depleted) depletionYears.push(depletionYear);
+
+    // Max drawdown within this path
+    let peak = r.snapshots.nominal[0] || 0;
+    let maxDD = 0;
+    for (const v of r.snapshots.nominal) {
+      if (v > peak) peak = v;
+      if (peak > 0) {
+        const dd = (peak - v) / peak;
+        if (dd > maxDD) maxDD = dd;
+      }
+    }
+    maxDrawdowns.push(maxDD);
+
+    for (let y = 0; y < r.snapshots.nominal.length; y++) {
+      yearMatrix[y].push(r.snapshots.nominal[y]);
+    }
+  }
+
+  function percentile(arr, p) {
+    if (arr.length === 0) return 0;
+    const sorted = arr.slice().sort((a, b) => a - b);
+    const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length));
+    return sorted[idx];
+  }
+
+  // Pick the 5 paths with the worst final value
+  const indexed = paths.map((p, i) => ({ p, i, final: p[p.length - 1] || 0 }));
+  indexed.sort((a, b) => a.final - b.final);
+  const worst = indexed.slice(0, 5).map(x => x.p);
+
+  return {
+    p10: yearMatrix.map(a => percentile(a, 0.10)),
+    p50: yearMatrix.map(a => percentile(a, 0.50)),
+    p90: yearMatrix.map(a => percentile(a, 0.90)),
+    finals: paths.map(p => p[p.length - 1] || 0),
+    worst,
+    successRate: survived.filter(Boolean).length / runs,
+    medianDepletionYear: depletionYears.length ? percentile(depletionYears, 0.5) : null,
+    medianDrawdown: percentile(maxDrawdowns, 0.5),
+    maxDrawdown: Math.max(...maxDrawdowns),
+  };
+}
+
+// =====================================================================
+// FIRE solver — binary search for earliest contribution-years that supports
+// the target real withdrawal for the target duration.
+// =====================================================================
+function solveFire(baseCfg, targetMonthly, durationYears) {
+  // Build a test: at startYear X, accumulate X years, then withdraw targetMonthly (real) for durationYears.
+  function testStartYear(X) {
+    const testCfg = {
+      ...baseCfg,
+      years: X + durationYears,
+      withdrawal: targetMonthly,
+      withdrawStart: X,
+      withdrawReal: true,
+      rebalance: baseCfg.rebalance,
+      expenses: [],
+    };
+    const r = simulate(testCfg);
+    return r.finalNominal > 0;
+  }
+  let lo = 1, hi = 80;
+  if (testStartYear(hi) === false) return { success: false };
+  if (testStartYear(lo) === true) return { success: true, years: lo };
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (testStartYear(mid)) hi = mid;
+    else lo = mid + 1;
+  }
+  return { success: true, years: lo };
+}
+
+// =====================================================================
+// Config reading / writing
+// =====================================================================
+function readConfig() {
+  return {
+    initial: parseFloat(v('initial')) || 0,
+    monthly: parseFloat(v('monthly')) || 0,
+    contribGrowth: (parseFloat(v('contribGrowth')) || 0) / 100,
+    years: parseInt(v('years')) || 1,
+    buckets: readBuckets(),
+    rebalance: c('rebalance'),
+    inflationOn: c('inflationOn'),
+    inflation: c('inflationOn') ? (parseFloat(v('inflation')) || 0) / 100 : 0,
+    displayMode: v('displayMode'),
+    mcOn: c('mcOn'),
+    mcRuns: parseInt(v('mcRuns')) || 200,
+    mcSeed: parseInt(v('mcSeed')) || 42,
+    withdrawal: parseFloat(v('withdrawal')) || 0,
+    withdrawStart: parseFloat(v('withdrawStart')) || 0,
+    withdrawReal: c('withdrawReal'),
+    taxOn: c('taxOn'),
+    fifoLots: c('fifoLots'),
+    marginalRate: (parseFloat(v('marginalRate')) || 0) / 100,
+    wealthTaxOn: c('wealthTaxOn'),
+    wealthExemption: parseFloat(v('wealthExemption')) || 0,
+    wealthFromPortfolio: v('wealthFromPortfolio') === 'portfolio',
+    showWorstPaths: c('showWorstPaths'),
+    expenses: readExpenses(),
+    fire: {
+      target: parseFloat(v('fireTarget')) || 0,
+      duration: parseFloat(v('fireDuration')) || 0,
+    },
+  };
+}
+function v(id) { return document.getElementById(id).value; }
+function c(id) { return document.getElementById(id).checked; }
+
+function writeConfig(cfg) {
+  setV('initial', cfg.initial);
+  setV('monthly', cfg.monthly);
+  setV('contribGrowth', cfg.contribGrowth * 100);
+  setV('years', cfg.years);
+  setC('rebalance', cfg.rebalance);
+  setC('inflationOn', cfg.inflationOn);
+  setV('inflation', cfg.inflation * 100);
+  setV('displayMode', cfg.displayMode);
+  setC('mcOn', cfg.mcOn);
+  setV('mcRuns', cfg.mcRuns);
+  setV('mcSeed', cfg.mcSeed);
+  setV('withdrawal', cfg.withdrawal);
+  setV('withdrawStart', cfg.withdrawStart);
+  setC('withdrawReal', cfg.withdrawReal);
+  setC('taxOn', cfg.taxOn);
+  setC('fifoLots', cfg.fifoLots);
+  setV('marginalRate', cfg.marginalRate * 100);
+  setC('wealthTaxOn', cfg.wealthTaxOn);
+  setV('wealthExemption', cfg.wealthExemption);
+  setV('wealthFromPortfolio', cfg.wealthFromPortfolio ? 'portfolio' : 'external');
+  setC('showWorstPaths', cfg.showWorstPaths);
+  if (cfg.fire) {
+    setV('fireTarget', cfg.fire.target);
+    setV('fireDuration', cfg.fire.duration);
+  }
+  renderBuckets(cfg.buckets);
+  renderExpenses(cfg.expenses);
+}
+function setV(id, val) { document.getElementById(id).value = val; }
+function setC(id, val) { document.getElementById(id).checked = !!val; }
+
+// =====================================================================
+// Buckets UI
+// =====================================================================
+const bucketsEl = document.getElementById('buckets');
+function readBuckets() {
+  return [...bucketsEl.querySelectorAll('.bucket')].map(el => ({
+    name: el.querySelector('.b-name').value || 'Bucket',
+    allocation: (parseFloat(el.querySelector('.b-alloc').value) || 0) / 100,
+    rate: (parseFloat(el.querySelector('.b-rate').value) || 0) / 100,
+    vol: (parseFloat(el.querySelector('.b-vol').value) || 0) / 100,
+    type: el.querySelector('.b-type').value,
+  }));
+}
+function renderBuckets(list) {
+  bucketsEl.innerHTML = '';
+  for (const b of list) addBucket(b);
+}
+function addBucket(b = {}) {
+  const el = document.createElement('div');
+  el.className = 'bucket';
+  el.innerHTML = `
+    <div class="bucket-head">
+      <input class="b-name" type="text" placeholder="Name" value="${escapeAttr(b.name || 'Equities')}" />
+      <button class="danger" title="Remove">×</button>
+    </div>
+    <div class="bucket-grid">
+      <div>
+        <label data-help="allocation">Allocation %</label>
+        <input class="b-alloc" type="number" value="${b.allocation != null ? b.allocation * 100 : 100}" step="5" />
+      </div>
+      <div>
+        <label data-help="return">Return %</label>
+        <input class="b-rate" type="number" value="${b.rate != null ? b.rate * 100 : 8}" step="0.1" />
+      </div>
+      <div>
+        <label data-help="volatility">Volatility %</label>
+        <input class="b-vol" type="number" value="${b.vol != null ? b.vol * 100 : 15}" step="0.5" />
+      </div>
+    </div>
+    <div class="bucket-type">
+      <label data-help="bucketType" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Type</label>
+      <select class="b-type">
+        <option value="equity">Equity / ETF</option>
+        <option value="bond">Bond</option>
+        <option value="cash">Cash</option>
+        <option value="pension">Pension plan</option>
+      </select>
+    </div>
+  `;
+  el.querySelector('.b-type').value = b.type || 'equity';
+  el.querySelector('button.danger').onclick = () => { el.remove(); render(); };
+  el.querySelectorAll('input, select').forEach(i => i.addEventListener('input', render));
+  bucketsEl.appendChild(el);
+  if (typeof injectHelpIcons === 'function') injectHelpIcons();
+}
+document.getElementById('addBucket').onclick = () => { addBucket(); render(); };
+function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+
+// =====================================================================
+// Expenses UI (one-time + recurring)
+// =====================================================================
+const expensesEl = document.getElementById('expenses');
+function readExpenses() {
+  return [...expensesEl.querySelectorAll('.expense-row')].map(r => {
+    const recurring = r.classList.contains('recurring');
+    const ins = r.querySelectorAll('input');
+    if (recurring) {
+      return {
+        name: ins[0].value || 'Expense',
+        amount: parseFloat(ins[1].value) || 0,
+        startMonth: parseInt(ins[2].value) || 1,
+        endMonth: parseInt(ins[3].value) || 1,
+        inflationIndexed: ins[4].checked,
+        recurring: true,
+      };
+    } else {
+      return {
+        name: ins[0].value || 'Expense',
+        amount: parseFloat(ins[1].value) || 0,
+        month: parseInt(ins[2].value) || 0,
+        recurring: false,
+      };
+    }
+  }).filter(e => e.amount > 0);
+}
+function addOneTime(name = '', amount = '', month = '') {
+  const row = document.createElement('div');
+  row.className = 'expense-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Label" value="${escapeAttr(name)}" />
+    <input type="number" placeholder="€" value="${amount}" />
+    <input type="number" placeholder="Month" value="${month}" title="Month number (1 = first month)" />
+    <span style="font-size:10px;color:var(--muted);text-align:center;">one</span>
+    <button class="danger">×</button>
+  `;
+  row.querySelector('button').onclick = () => { row.remove(); render(); };
+  row.querySelectorAll('input').forEach(i => i.addEventListener('input', render));
+  expensesEl.appendChild(row);
+}
+function addRecurring(name = '', amount = '', startMonth = '', endMonth = '', indexed = true) {
+  const row = document.createElement('div');
+  row.className = 'expense-row recurring';
+  row.innerHTML = `
+    <input type="text" placeholder="Label" value="${escapeAttr(name)}" />
+    <input type="number" placeholder="€/mo" value="${amount}" />
+    <input type="number" placeholder="Start" value="${startMonth}" title="Start month" />
+    <input type="number" placeholder="End" value="${endMonth}" title="End month" />
+    <input type="checkbox" ${indexed ? 'checked' : ''} title="Inflation-indexed" />
+    <button class="danger">×</button>
+  `;
+  row.querySelector('button').onclick = () => { row.remove(); render(); };
+  row.querySelectorAll('input').forEach(i => i.addEventListener('input', render));
+  expensesEl.appendChild(row);
+}
+function renderExpenses(list) {
+  expensesEl.innerHTML = '';
+  for (const e of list) {
+    if (e.recurring) addRecurring(e.name, e.amount, e.startMonth, e.endMonth, e.inflationIndexed);
+    else addOneTime(e.name, e.amount, e.month);
+  }
+}
+document.getElementById('addExpense').onclick = () => { addOneTime('', '', ''); };
+document.getElementById('addRecurring').onclick = () => { addRecurring('', '', '', '', true); };
+
+// =====================================================================
+// Mode tabs (Accumulation / FIRE)
+// =====================================================================
+document.querySelectorAll('.mode-tabs button').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.mode-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.getElementById('accumPanel').style.display = mode === 'accum' ? '' : 'none';
+    document.getElementById('firePanel').style.display = mode === 'fire' ? '' : 'none';
+  };
+});
+document.getElementById('solveFire').onclick = () => {
+  const cfg = readConfig();
+  const res = solveFire(cfg, cfg.fire.target, cfg.fire.duration);
+  const el = document.getElementById('fireResult');
+  if (!res.success) {
+    el.className = 'fire-result fail';
+    el.innerHTML = `<div class="big">Not achievable</div><div class="hint">Even at 80 years of contributions, the portfolio can't sustain €${cfg.fire.target}/mo (real) for ${cfg.fire.duration} years with current parameters. Try raising contributions or return rate, or lowering the target.</div>`;
+  } else {
+    el.className = 'fire-result';
+    el.innerHTML = `<div class="big">${res.years} years of contributions</div><div class="hint">…to sustain €${cfg.fire.target}/mo (real) for ${cfg.fire.duration} years.</div>`;
+  }
+};
+
+// =====================================================================
+// Scenarios (localStorage)
+// =====================================================================
+const STORAGE_KEY = 'mony-scenarios-v1';
+function loadStore() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
+function saveStore(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+function refreshScenarioSelect() {
+  const store = loadStore();
+  const sel = document.getElementById('scenarioSelect');
+  sel.innerHTML = '<option value="">— current (unsaved) —</option>';
+  for (const name of Object.keys(store).sort()) {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    sel.appendChild(o);
+  }
+}
+document.getElementById('saveScenario').onclick = () => {
+  const name = prompt('Scenario name:');
+  if (!name) return;
+  const store = loadStore();
+  store[name] = readConfig();
+  saveStore(store);
+  refreshScenarioSelect();
+  document.getElementById('scenarioSelect').value = name;
+};
+document.getElementById('loadScenario').onclick = () => {
+  const name = document.getElementById('scenarioSelect').value;
+  if (!name) return;
+  const store = loadStore();
+  if (!store[name]) return;
+  writeConfig({ ...defaultConfig(), ...store[name] });
+  render();
+};
+document.getElementById('deleteScenario').onclick = () => {
+  const name = document.getElementById('scenarioSelect').value;
+  if (!name) return;
+  if (!confirm(`Delete scenario "${name}"?`)) return;
+  const store = loadStore();
+  delete store[name];
+  saveStore(store);
+  refreshScenarioSelect();
+};
+document.getElementById('exportJson').onclick = () => {
+  const data = JSON.stringify({ scenarios: loadStore(), current: readConfig() }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'mony-scenarios.json'; a.click();
+  URL.revokeObjectURL(url);
+};
+document.getElementById('importJson').onclick = () => document.getElementById('importFile').click();
+document.getElementById('importFile').addEventListener('change', (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (data.scenarios) {
+        const store = loadStore();
+        Object.assign(store, data.scenarios);
+        saveStore(store);
+      }
+      if (data.current) writeConfig({ ...defaultConfig(), ...data.current });
+      refreshScenarioSelect();
+      render();
+    } catch (e) {
+      alert('Failed to parse JSON: ' + e.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Overlay scenarios on chart
+let overlays = []; // [{name, result, color}]
+const OVERLAY_COLORS = ['#6b5a8a', '#b4823f', '#4a8aa8', '#a85a7a', '#7a9440'];
+document.getElementById('overlayScenario').onclick = () => {
+  const name = document.getElementById('scenarioSelect').value;
+  if (!name) { alert('Select a scenario first.'); return; }
+  const store = loadStore();
+  const raw = store[name];
+  if (!raw) return;
+  if (overlays.find(o => o.name === name)) return;
+  const cfg = { ...defaultConfig(), ...raw };
+  const color = OVERLAY_COLORS[overlays.length % OVERLAY_COLORS.length];
+  overlays.push({ name, cfg, color });
+  renderOverlayChips();
+  render();
+};
+function renderOverlayChips() {
+  const el = document.getElementById('overlayChips');
+  el.innerHTML = '';
+  for (const o of overlays) {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `<span class="swatch" style="background:${o.color}"></span>${o.name}<span class="close">×</span>`;
+    chip.querySelector('.close').onclick = () => {
+      overlays = overlays.filter(x => x.name !== o.name);
+      renderOverlayChips();
+      render();
+    };
+    el.appendChild(chip);
+  }
+}
+
+// =====================================================================
+// Rendering (chart + stats + table)
+// =====================================================================
+const ctx = document.getElementById('chart').getContext('2d');
+let chart;
+const fmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const fmtD = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
+
+let lastResult = null;
+
+function render() {
+  const cfg = readConfig();
+  const r = simulate(cfg);
+  lastResult = { cfg, r };
+
+  // Stats
+  document.getElementById('finalBalance').textContent = fmt.format(r.finalNominal);
+  document.getElementById('finalBalanceReal').textContent =
+    cfg.inflation > 0 ? 'real: ' + fmt.format(r.finalReal) : '';
+  document.getElementById('totalContributed').textContent = fmt.format(r.totalContributed);
+  const totalGain = r.finalNominal + r.totalWithdrawnGross - r.totalContributed;
+  document.getElementById('totalContribSub').textContent = 'gain: ' + fmt.format(totalGain);
+  document.getElementById('totalWithdrawn').textContent = fmt.format(r.totalWithdrawnNet);
+  document.getElementById('totalWithdrawnGross').textContent = 'gross: ' + fmt.format(r.totalWithdrawnGross);
+  const totalTax = r.totalCapGainsTax + r.totalPensionIncomeTax + r.totalWealthTax;
+  document.getElementById('totalTax').textContent = fmt.format(totalTax);
+  const subParts = [];
+  if (r.totalTaxSavings > 0) subParts.push('pension savings: ' + fmt.format(r.totalTaxSavings));
+  if (r.totalWealthTax > 0) subParts.push('wealth: ' + fmt.format(r.totalWealthTax));
+  document.getElementById('totalTaxSub').textContent = subParts.join(' · ') || 'on realized gains';
+
+  // Theme-aware chart colors
+  const css = getComputedStyle(document.documentElement);
+  const cv = k => css.getPropertyValue(k).trim();
+  const CL = {
+    text: cv('--text'),
+    textSoft: cv('--text-soft'),
+    muted: cv('--muted'),
+    grid: cv('--grid'),
+    panel: cv('--panel'),
+    border: cv('--border'),
+    accent: cv('--accent'),
+    accent2: cv('--accent-2'),
+  };
+  // Build translucent variants of the accent
+  function hexToRgba(hex, a) {
+    const h = hex.replace('#', '');
+    const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    const num = parseInt(n, 16);
+    return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${a})`;
+  }
+  const accentSoft = hexToRgba(CL.accent, 0.14);
+  const accentLine = hexToRgba(CL.accent, 0.3);
+
+  // Datasets
+  const mode = cfg.displayMode;
+  const datasets = [];
+
+  // Monte Carlo bands + stats
+  let mc = null;
+  if (cfg.mcOn) {
+    try { mc = monteCarlo(cfg, Math.min(cfg.mcRuns, 5000), cfg.mcSeed); }
+    catch (e) { console.warn('MC failed', e); }
+  }
+  const mcPanel = document.getElementById('mcStats');
+  if (mc) {
+    mcPanel.classList.remove('hidden');
+    const successPct = (mc.successRate * 100).toFixed(1);
+    document.getElementById('mcSuccess').textContent = successPct + '%';
+    document.getElementById('mcMedian').textContent = fmt.format(mc.p50[mc.p50.length - 1]);
+    document.getElementById('mcMedianSub').textContent = 'P10: ' + fmt.format(mc.p10[mc.p10.length - 1]);
+    document.getElementById('mcDrawdown').textContent = (mc.medianDrawdown * 100).toFixed(1) + '%';
+    document.getElementById('mcDepletion').textContent =
+      mc.medianDepletionYear != null ? 'Y' + mc.medianDepletionYear : '—';
+    document.getElementById('mcDepletionSub').textContent =
+      mc.medianDepletionYear != null
+        ? `${runsFailed(mc)} of ${cfg.mcRuns} runs failed`
+        : 'no runs depleted';
+  } else {
+    mcPanel.classList.add('hidden');
+  }
+  function runsFailed(mc) { return Math.round((1 - mc.successRate) * cfg.mcRuns); }
+  if (mc) {
+    datasets.push({
+      label: 'MC P90',
+      data: mc.p90,
+      borderColor: accentLine,
+      backgroundColor: accentSoft,
+      fill: '+1',
+      pointRadius: 0,
+      borderWidth: 1,
+      tension: 0.25,
+    });
+    datasets.push({
+      label: 'MC P10',
+      data: mc.p10,
+      borderColor: accentLine,
+      backgroundColor: 'transparent',
+      fill: false,
+      pointRadius: 0,
+      borderWidth: 1,
+      tension: 0.25,
+    });
+    datasets.push({
+      label: 'MC P50 (median)',
+      data: mc.p50,
+      borderColor: CL.accent,
+      borderDash: [6, 4],
+      fill: false,
+      pointRadius: 0,
+      borderWidth: 1.5,
+      tension: 0.25,
+    });
+
+    // Sequence-of-returns: worst 5 paths as thin red lines
+    if (cfg.showWorstPaths && mc.worst) {
+      mc.worst.forEach((path, i) => {
+        datasets.push({
+          label: i === 0 ? 'Worst 5 paths' : '_worst' + i,
+          data: path,
+          borderColor: 'rgba(180,74,58,0.45)',
+          fill: false,
+          pointRadius: 0,
+          borderWidth: 1,
+          tension: 0.15,
+        });
+      });
+    }
+  }
+
+  // Deterministic main series
+  if (mode === 'nominal' || mode === 'both') {
+    datasets.push({
+      label: 'Net worth (nominal)',
+      data: r.snapshots.nominal,
+      borderColor: CL.accent,
+      backgroundColor: accentSoft,
+      fill: !mc,
+      tension: 0.25,
+      pointRadius: 0,
+      borderWidth: 2.4,
+    });
+  }
+  if ((mode === 'real' || mode === 'both') && cfg.inflation > 0) {
+    datasets.push({
+      label: 'Net worth (real)',
+      data: r.snapshots.real,
+      borderColor: CL.accent2,
+      backgroundColor: hexToRgba(CL.accent2, 0.1),
+      fill: mode === 'real' && !mc,
+      tension: 0.25,
+      pointRadius: 0,
+      borderWidth: 2.2,
+    });
+  }
+  datasets.push({
+    label: 'Total contributed',
+    data: r.snapshots.contributed,
+    borderColor: CL.muted,
+    borderDash: [4, 4],
+    fill: false,
+    tension: 0,
+    pointRadius: 0,
+    borderWidth: 1.5,
+  });
+
+  // Overlays
+  for (const o of overlays) {
+    const or = simulate(o.cfg);
+    datasets.push({
+      label: 'Overlay: ' + o.name,
+      data: or.snapshots.nominal,
+      borderColor: o.color,
+      fill: false,
+      tension: 0.25,
+      pointRadius: 0,
+      borderWidth: 2,
+    });
+  }
+
+  const labels = r.labels;
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            color: CL.textSoft,
+            font: { family: 'Inter', size: 12, weight: '500' },
+            usePointStyle: true,
+            pointStyle: 'circle',
+            padding: 14,
+            filter: (item) => !item.text.startsWith('MC P10') && !item.text.startsWith('MC P90') && !item.text.startsWith('_worst'),
+          },
+        },
+        tooltip: {
+          backgroundColor: CL.panel,
+          titleColor: CL.text,
+          bodyColor: CL.textSoft,
+          borderColor: CL.border,
+          borderWidth: 1,
+          titleFont: { family: 'Inter', weight: '600' },
+          bodyFont: { family: 'Inter' },
+          padding: 12,
+          cornerRadius: 8,
+          boxPadding: 4,
+          callbacks: {
+            label: (c) => ' ' + c.dataset.label + ': ' + fmtD.format(c.parsed.y),
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: CL.muted, font: { family: 'Inter', size: 11 } },
+          grid: { color: CL.grid },
+          border: { color: CL.border },
+        },
+        y: {
+          ticks: { color: CL.muted, font: { family: 'Inter', size: 11 }, callback: (v) => fmt.format(v) },
+          grid: { color: CL.grid },
+          border: { color: CL.border },
+        },
+      },
+    },
+  });
+
+  // Table (render if visible)
+  const tc = document.getElementById('tableContainer');
+  if (tc.style.display !== 'none') renderTable(r);
+}
+
+function renderTable(r) {
+  const tc = document.getElementById('tableContainer');
+  let html = `<div class="scroll-table"><table class="year-table">
+    <thead><tr>
+      <th>Year</th><th>Balance</th><th>Real</th><th>Contributed</th>
+      <th>Withdrawn (net)</th><th>Cap-gains tax</th><th>Pension tax</th>
+    </tr></thead><tbody>`;
+  for (const y of r.snapshots.yearly) {
+    html += `<tr>
+      <td>Y${y.year}</td>
+      <td>${fmt.format(y.balance)}</td>
+      <td>${fmt.format(y.balanceReal)}</td>
+      <td>${fmt.format(y.contributed)}</td>
+      <td>${fmt.format(y.withdrawnNet)}</td>
+      <td>${fmt.format(y.taxCap)}</td>
+      <td>${fmt.format(y.taxPension)}</td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  tc.innerHTML = html;
+}
+
+document.getElementById('toggleTable').onclick = () => {
+  const tc = document.getElementById('tableContainer');
+  const btn = document.getElementById('toggleTable');
+  if (tc.style.display === 'none') {
+    tc.style.display = '';
+    btn.textContent = 'Hide';
+    if (lastResult) renderTable(lastResult.r);
+  } else {
+    tc.style.display = 'none';
+    btn.textContent = 'Show';
+  }
+};
+
+document.getElementById('exportCsv').onclick = () => {
+  if (!lastResult) return;
+  const rows = [
+    ['Year', 'Balance', 'Real', 'Contributed', 'WithdrawnGross', 'WithdrawnNet', 'CapGainsTax', 'PensionTax'].join(','),
+  ];
+  for (const y of lastResult.r.snapshots.yearly) {
+    rows.push([y.year, y.balance, y.balanceReal, y.contributed, y.withdrawnGross, y.withdrawnNet, y.taxCap, y.taxPension].map(n => typeof n === 'number' ? n.toFixed(2) : n).join(','));
+  }
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'mony-yearly.csv'; a.click();
+  URL.revokeObjectURL(url);
+};
+
+// =====================================================================
+// Bindings
+// =====================================================================
+document.getElementById('run').onclick = render;
+document.getElementById('reset').onclick = () => {
+  writeConfig(defaultConfig());
+  overlays = [];
+  renderOverlayChips();
+  render();
+};
+
+// Live updates — debounced. Bind to both `input` (fires on arrow keys & typing)
+// and `change` (covers select/checkbox on older browsers).
+let renderTimer = null;
+function scheduleRender() {
+  if (renderTimer) clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => { render(); updateHash(); }, 120);
+}
+document.querySelectorAll('aside input, aside select').forEach(el => {
+  if (el.id === 'importFile') return;
+  el.addEventListener('input', scheduleRender);
+  el.addEventListener('change', scheduleRender);
+});
+
+// =====================================================================
+// Theme toggle (persisted in localStorage)
+// =====================================================================
+const THEME_KEY = 'mony-theme';
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀' : '☾';
+  // Chart colors use CSS vars via getComputedStyle; re-render to refresh chart text/grid
+  if (chart) render();
+}
+document.getElementById('themeToggle').onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+};
+(function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+})();
+
+// =====================================================================
+// Shareable URL — encode current config into window.location.hash
+// =====================================================================
+function encodeConfig(cfg) {
+  try {
+    const json = JSON.stringify(cfg);
+    // btoa doesn't handle unicode; use encodeURIComponent first
+    return btoa(unescape(encodeURIComponent(json)));
+  } catch { return ''; }
+}
+function decodeConfig(hash) {
+  try {
+    const json = decodeURIComponent(escape(atob(hash)));
+    return JSON.parse(json);
+  } catch { return null; }
+}
+function updateHash() {
+  const cfg = readConfig();
+  const h = encodeConfig(cfg);
+  if (h) {
+    // Use replaceState to avoid cluttering browser history
+    history.replaceState(null, '', '#s=' + h);
+  }
+}
+function loadFromHash() {
+  const h = window.location.hash || '';
+  const m = h.match(/^#s=(.+)$/);
+  if (!m) return false;
+  const cfg = decodeConfig(m[1]);
+  if (!cfg) return false;
+  // Merge with defaults so older hashes missing new fields still work
+  writeConfig({ ...defaultConfig(), ...cfg });
+  return true;
+}
+document.getElementById('copyLink').onclick = () => {
+  updateHash();
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copyLink');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('flash');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('flash'); }, 1200);
+  }).catch(() => {
+    alert('URL: ' + url);
+  });
+};
+
+// =====================================================================
+// Defaults + init
+// =====================================================================
+function defaultConfig() {
+  return {
+    initial: 10000,
+    monthly: 500,
+    contribGrowth: 0,
+    years: 30,
+    buckets: [
+      { name: 'Global ETF', allocation: 0.8, rate: 0.08, vol: 0.16, type: 'equity' },
+      { name: 'Bonds', allocation: 0.2, rate: 0.03, vol: 0.05, type: 'bond' },
+    ],
+    rebalance: false,
+    inflationOn: true,
+    inflation: 0.025,
+    displayMode: 'both',
+    mcOn: false,
+    mcRuns: 400,
+    mcSeed: 42,
+    withdrawal: 0,
+    withdrawStart: 20,
+    withdrawReal: false,
+    taxOn: true,
+    fifoLots: true,
+    marginalRate: 0.37,
+    wealthTaxOn: false,
+    wealthExemption: 700000,
+    wealthFromPortfolio: true,
+    showWorstPaths: false,
+    expenses: [
+      { name: 'Car', amount: 20000, month: 36, recurring: false },
+      { name: 'House down payment', amount: 60000, month: 120, recurring: false },
+    ],
+    fire: { target: 2500, duration: 30 },
+  };
+}
+
+// =====================================================================
+// Help system — plain-language explanations for every parameter
+// =====================================================================
+const HELP = {
+  scenarios: {
+    title: "Scenarios",
+    body: `<p>A <strong>scenario</strong> is a complete snapshot of all your settings — contribution, buckets, inflation, expenses, everything. Saving one lets you come back to it later or compare different plans.</p>
+           <p>Use <em>Overlay</em> to plot a saved scenario <strong>on top of</strong> your current one, so you can visually compare "aggressive" vs "conservative" setups on the same chart.</p>
+           <p>Scenarios live in your browser's local storage. Export to JSON if you want to back them up or move them to another device.</p>`,
+  },
+  portfolio: {
+    title: "Portfolio basics",
+    body: `<p>Your portfolio is the pool of money that grows over time through investment returns and shrinks through withdrawals or expenses.</p>
+           <p>The three core inputs define how it <strong>starts</strong>, how fast it <strong>grows through your saving</strong>, and <strong>how long</strong> the simulation runs.</p>`,
+  },
+  initial: {
+    title: "Initial capital",
+    body: `<p>The money you start with — what's already in your brokerage account, savings, or investments at <strong>month zero</strong> of the simulation.</p>
+           <p>It gets split across your asset buckets according to their allocation percentages and starts compounding from day one.</p>
+           <p><strong>Example:</strong> if you have <code>€10,000</code> in an ETF today, enter <code>10000</code>.</p>`,
+  },
+  monthly: {
+    title: "Monthly contribution",
+    body: `<p>The amount you plan to <strong>add to your portfolio every month</strong> from your salary or savings. This is the engine of compounding — regular contributions matter more than initial capital over long horizons.</p>
+           <p>The contribution is split across your asset buckets by their target allocations each month.</p>`,
+  },
+  contribGrowth: {
+    title: "Contribution growth",
+    body: `<p>How much your monthly contribution increases <strong>each year</strong>, as a percentage. This models your salary growing over time — you can afford to invest more as you earn more.</p>
+           <p>Leave at <code>0</code> for a fixed contribution. Set to <code>3</code> if you expect to increase savings by 3% per year (roughly matching inflation).</p>`,
+  },
+  years: {
+    title: "Simulation horizon",
+    body: `<p>How many years to simulate. Compound interest is exponential, so the difference between 20 and 40 years is dramatic — not double, but roughly quadruple.</p>
+           <p>For retirement planning, set this to <strong>your expected age minus your current age</strong>, e.g. 40 years if you're 25 and want to see a picture through age 65.</p>`,
+  },
+  buckets: {
+    title: "Asset buckets",
+    body: `<p>An <strong>asset bucket</strong> is a group of investments that behave similarly — a global stock ETF, government bonds, cash, a pension plan. Each has its own expected return and volatility.</p>
+           <p>You split your money across buckets using <strong>allocations</strong> (percentages that sum to 100%). A classic mix is <code>80% equity / 20% bonds</code> — higher expected return from stocks, cushioned by more stable bonds.</p>
+           <p>Why multiple buckets? Different assets have different returns, different risks, and different tax treatment. Modeling them separately gives a much more realistic projection.</p>`,
+  },
+  allocation: {
+    title: "Allocation %",
+    body: `<p>What portion of your money goes into this bucket. If you have two buckets at <code>80</code> and <code>20</code>, 80% of every contribution (and 80% of your initial capital) goes to the first bucket.</p>
+           <p>Allocations are automatically normalized, so <code>80/20</code> and <code>4/1</code> produce the same result.</p>`,
+  },
+  return: {
+    title: "Expected return",
+    body: `<p>The <strong>average annual return</strong> you expect from this bucket, as a percentage. Historical benchmarks:</p>
+           <ul>
+             <li>Global stock index (S&P 500, MSCI World): ~<code>8%</code></li>
+             <li>Government bonds: ~<code>3%</code></li>
+             <li>Cash / savings account: ~<code>2%</code></li>
+           </ul>
+           <p>Past returns don't guarantee future ones — use Monte Carlo with volatility to see the range of plausible outcomes.</p>`,
+  },
+  volatility: {
+    title: "Volatility",
+    body: `<p>How much the annual return <strong>varies year-to-year</strong>, as a standard deviation. Volatility doesn't change the average, but it makes the path bumpier — some years up 30%, others down 20%.</p>
+           <p>Only used by Monte Carlo simulation. Typical values:</p>
+           <ul>
+             <li>Global stocks: ~<code>15–18%</code></li>
+             <li>Bonds: ~<code>5%</code></li>
+             <li>Cash: ~<code>1%</code></li>
+           </ul>
+           <p>Higher volatility means a wider "cone of uncertainty" around your projection.</p>`,
+  },
+  bucketType: {
+    title: "Bucket type",
+    body: `<p>Affects how the bucket is <strong>taxed in Spain</strong>:</p>
+           <ul>
+             <li><strong>Equity / Bond / Cash:</strong> taxed as capital gains when you sell (19–30% progressive on the gain portion).</li>
+             <li><strong>Pension plan (Plan de Pensiones):</strong> contributions up to €1,500/year give you an <strong>income-tax deduction today</strong> (shown as "pension savings"). But when you withdraw, the <strong>entire amount</strong> — not just the gain — is taxed as ordinary income at your marginal rate.</li>
+           </ul>
+           <p>Pension plans are a bet that your marginal rate in retirement will be lower than today.</p>`,
+  },
+  rebalance: {
+    title: "Annual rebalancing",
+    body: `<p>Over time, buckets drift from their target allocations — if stocks grow faster than bonds, your "80/20" portfolio might become "90/10". Rebalancing sells from over-allocated buckets and buys into under-allocated ones to restore your target.</p>
+           <p><strong>Important:</strong> rebalancing <em>realizes</em> gains, so it <strong>triggers capital-gains tax</strong> in a taxable account. The simulation models this cost — you'll see taxes paid each year even without active withdrawals.</p>`,
+  },
+  inflation: {
+    title: "Inflation",
+    body: `<p>Inflation is the <strong>erosion of purchasing power</strong> over time. €100 today buys more than €100 will in 30 years.</p>
+           <p>The simulation tracks two values:</p>
+           <ul>
+             <li><strong>Nominal:</strong> raw euros in your account.</li>
+             <li><strong>Real:</strong> nominal adjusted for inflation — "what this amount would buy in today's money".</li>
+           </ul>
+           <p>Real is the more honest view for long horizons. A <code>€1M</code> nominal portfolio in 40 years at 2.5% inflation is only worth ~<code>€370k</code> in today's purchasing power.</p>`,
+  },
+  inflationOn: {
+    title: "Adjust for inflation",
+    body: `<p>When enabled, the simulation tracks a real (inflation-adjusted) value alongside the nominal one. Turn off if you want to reason purely in nominal euros.</p>`,
+  },
+  displayMode: {
+    title: "Display mode",
+    body: `<p>Which lines to show on the chart:</p>
+           <ul>
+             <li><strong>Nominal + Real:</strong> both lines side-by-side (recommended).</li>
+             <li><strong>Nominal only:</strong> raw euro amounts.</li>
+             <li><strong>Real only:</strong> purchasing power in today's money.</li>
+           </ul>`,
+  },
+  montecarlo: {
+    title: "Monte Carlo simulation",
+    body: `<p>A single projected line is misleading — it assumes your portfolio earns exactly the average return every single year, which never happens in reality.</p>
+           <p>Monte Carlo runs the simulation <strong>hundreds of times</strong>, each with a different randomly-generated path of returns drawn from the bucket's expected return and volatility. The result is a <strong>range</strong> of outcomes:</p>
+           <ul>
+             <li><strong>P10:</strong> only 10% of runs ended below this line (bad case).</li>
+             <li><strong>P50 (median):</strong> half ended above, half below.</li>
+             <li><strong>P90:</strong> only 10% ended above this line (good case).</li>
+           </ul>
+           <p>The gap between P10 and P90 tells you how <strong>uncertain</strong> the projection is. A wide gap means you should have a margin of safety.</p>`,
+  },
+  mcRuns: {
+    title: "Number of runs",
+    body: `<p>How many randomly-generated paths to simulate. More runs = smoother and more accurate percentile bands, but slower.</p>
+           <p><code>200–500</code> is fine for quick exploration. <code>1000+</code> if you want publication-quality percentiles.</p>`,
+  },
+  mcSeed: {
+    title: "Random seed",
+    body: `<p>A number that initializes the random generator. Using the <strong>same seed</strong> gives the <strong>same Monte Carlo result</strong> every time — useful for reproducibility and comparing scenarios fairly.</p>
+           <p>Change the seed to re-draw a fresh set of random paths.</p>`,
+  },
+  mode: {
+    title: "Simulation mode",
+    body: `<p><strong>Accumulation:</strong> you set a withdrawal amount and start year, and see the resulting trajectory. Good for "what if I retire at 55 and need €2,000/month".</p>
+           <p><strong>FIRE solver:</strong> the inverse problem — you set a target withdrawal and duration, and the tool <strong>finds the earliest year</strong> you can start without running out of money. Good for "when can I retire?".</p>`,
+  },
+  withdrawal: {
+    title: "Monthly withdrawal",
+    body: `<p>How much you withdraw from your portfolio each month once withdrawals begin. The simulation sells from all buckets proportionally to fund this.</p>
+           <p>In Spain, the gain portion of each withdrawal is taxed progressively (19–30%). For pension-type buckets, the entire amount is taxed as income.</p>`,
+  },
+  withdrawStart: {
+    title: "Withdrawal start year",
+    body: `<p>The year in which you stop contributing and start withdrawing. Before this year: you're accumulating. After: you're living off the portfolio.</p>
+           <p><strong>Note:</strong> contributions continue until this point by default. If you want to stop contributing earlier, set monthly contribution to 0.</p>`,
+  },
+  withdrawReal: {
+    title: "Keep withdrawal real",
+    body: `<p>When enabled, your withdrawal amount <strong>grows with inflation</strong> — so you preserve the same <em>purchasing power</em> every year. €2,000/month today becomes ~€3,280 nominal in 20 years at 2.5% inflation.</p>
+           <p>This is the realistic option for retirement planning — your grocery bill grows too.</p>`,
+  },
+  fireTarget: {
+    title: "FIRE target withdrawal",
+    body: `<p>The monthly income you want to sustain in retirement, expressed in <strong>today's purchasing power</strong>. The solver will find how long you need to keep contributing to make this sustainable.</p>
+           <p><strong>Rule of thumb:</strong> at 4% safe withdrawal, €2,500/month requires a ~€750,000 portfolio (real).</p>`,
+  },
+  fireDuration: {
+    title: "FIRE duration",
+    body: `<p>How many years the withdrawal needs to last. For traditional retirement at 65, use <code>25–30</code> years. For early retirement at 45, use <code>40+</code> years.</p>
+           <p>Longer durations make FIRE harder — your portfolio has to survive more sequences of bad market years.</p>`,
+  },
+  expenses: {
+    title: "Expenses",
+    body: `<p>Money that leaves the portfolio at specific times:</p>
+           <ul>
+             <li><strong>One-time:</strong> a single outflow at a specific month — car, wedding, house down-payment.</li>
+             <li><strong>Recurring:</strong> a monthly outflow between two months — rent, tuition, parental support. Optionally inflation-indexed so it grows over time.</li>
+           </ul>
+           <p>Both are funded by <strong>selling</strong> from your portfolio, which realizes gains and can trigger capital-gains tax.</p>
+           <p>Month number <code>1</code> = first month, <code>12</code> = end of year 1, <code>120</code> = end of year 10.</p>`,
+  },
+  taxes: {
+    title: "Spanish taxes",
+    body: `<p>The simulation models the 2026 Spanish tax regime:</p>
+           <p><strong>Savings income (capital gains) — progressive:</strong></p>
+           <ul>
+             <li>0 – 6,000 €: <code>19%</code></li>
+             <li>6,000 – 50,000 €: <code>21%</code></li>
+             <li>50,000 – 200,000 €: <code>23%</code></li>
+             <li>200,000 – 300,000 €: <code>27%</code></li>
+             <li>Above 300,000 €: <code>30%</code></li>
+           </ul>
+           <p>Brackets are applied to <strong>cumulative yearly gains</strong> — selling more in the same year pushes you into higher brackets.</p>
+           <p>Pension withdrawals are taxed as <strong>ordinary income</strong> at your marginal rate, not as capital gains.</p>`,
+  },
+  taxOn: {
+    title: "Apply capital-gains tax",
+    body: `<p>Turn off to see a pre-tax projection (useful for comparing strategies). When on, every withdrawal and expense triggers tax on its gain portion.</p>`,
+  },
+  fifoLots: {
+    title: "FIFO lot tracking",
+    body: `<p>When you sell part of your portfolio, which "shares" are considered sold — the ones bought first, or an average?</p>
+           <p><strong>FIFO (First In, First Out):</strong> the shares you bought <em>earliest</em> are sold first. This is what Spanish tax law requires. Because early shares have had more time to appreciate, they have the largest gains — so FIFO tends to produce <strong>more tax</strong> in the early withdrawal years.</p>
+           <p><strong>Proportional (off):</strong> a simpler approximation where every sale realizes a proportional slice of total gains. Less accurate but easier to reason about.</p>`,
+  },
+  showWorstPaths: {
+    title: "Worst 5 paths (sequence of returns)",
+    body: `<p>A Monte Carlo band shows you the <em>range</em> of final outcomes, but hides a critical risk: <strong>when</strong> bad returns happen matters far more than their average.</p>
+           <p>A portfolio that earns -30% in year 1 of retirement and then recovers is in serious trouble — you're selling shares at a low. The <strong>same returns in reverse</strong> (good first, bad last) would leave you fine.</p>
+           <p>This toggle overlays the <strong>five worst paths</strong> as thin red lines, so you can see the sequences where things went wrong. Useful to spot paths that deplete early.</p>`,
+  },
+  wealthTax: {
+    title: "Spanish wealth tax (Patrimonio)",
+    body: `<p>Spain applies an annual tax on <strong>total net worth above an exemption threshold</strong> (typically €700k). Unlike cap-gains tax, it's paid every year on the balance itself, not on realized gains.</p>
+           <p>Rates are progressive (0.2% to 3.5%) and <strong>vary by region</strong> — Madrid applies a 100% rebate (effectively 0), while Catalonia, Asturias, and others charge the full state scale. The app uses the state default; adjust your expectations accordingly.</p>
+           <p>Over long horizons this can be a <strong>meaningful drag</strong>: a €2M portfolio pays roughly €10-15k/year. Compounded, that's hundreds of thousands of euros.</p>`,
+  },
+  wealthTaxOn: {
+    title: "Apply wealth tax",
+    body: `<p>Enable to model annual wealth tax at year-end based on total portfolio value minus the exemption.</p>
+           <p>Leave off if you live in a region with full rebate (Madrid, Andalucía at present) or if you expect the tax to be abolished.</p>`,
+  },
+  wealthExemption: {
+    title: "Wealth tax exemption",
+    body: `<p>The amount of net worth that's <strong>not taxed</strong>. State default is €700,000 per person. Primary residences are additionally exempt up to €300,000 — if that applies, set the exemption to €1,000,000.</p>
+           <p>Everything above this amount enters the progressive brackets.</p>`,
+  },
+  wealthFromPortfolio: {
+    title: "Wealth tax funding source",
+    body: `<p><strong>From portfolio:</strong> the tax is paid by selling assets, which realizes capital gains and triggers additional cap-gains tax. Most realistic if you have no external income.</p>
+           <p><strong>External income:</strong> you pay from salary or other income. The portfolio is reduced by the tax amount but no sale happens, so no cap-gains tax cascade.</p>
+           <p>For retirees living off the portfolio, choose "from portfolio". For working professionals, "external" is more realistic.</p>`,
+  },
+  marginalRate: {
+    title: "Marginal income tax rate",
+    body: `<p>Your <strong>top income-tax bracket</strong> — the rate applied to the next euro of salary you earn. In Spain, depending on region, this is typically:</p>
+           <ul>
+             <li><code>~24%</code> for middle incomes (~€35k/year)</li>
+             <li><code>~37%</code> for upper-middle (~€60k/year)</li>
+             <li><code>~45–47%</code> for high incomes (~€150k+)</li>
+           </ul>
+           <p>Used for two things: <strong>(1)</strong> the tax refund you get for pension contributions today (up to €1,500/year), and <strong>(2)</strong> the tax you pay on pension withdrawals.</p>`,
+  },
+};
+
+// Modal controller
+const helpModal = document.getElementById('helpModal');
+const helpTitle = document.getElementById('helpTitle');
+const helpBody = document.getElementById('helpBody');
+function openHelp(key) {
+  const entry = HELP[key];
+  if (!entry) return;
+  helpTitle.textContent = entry.title;
+  helpBody.innerHTML = entry.body;
+  helpModal.classList.add('open');
+}
+function closeHelp() { helpModal.classList.remove('open'); }
+document.getElementById('helpClose').onclick = closeHelp;
+helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelp(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHelp(); });
+
+// Inject a "?" icon after every element with data-help (idempotent).
+// Re-run after any dynamic UI change (buckets, expenses).
+function injectHelpIcons() {
+  document.querySelectorAll('[data-help]').forEach(el => {
+    if (el.querySelector(':scope > .help-icon')) return;
+    const icon = document.createElement('span');
+    icon.className = 'help-icon';
+    icon.textContent = '?';
+    icon.title = 'What is this?';
+    icon.dataset.helpKey = el.dataset.help;
+    el.appendChild(icon);
+  });
+}
+document.addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('help-icon')) {
+    e.preventDefault();
+    e.stopPropagation();
+    openHelp(e.target.dataset.helpKey);
+  }
+});
+
+// Init: load from URL hash if present, else defaults
+if (!loadFromHash()) {
+  writeConfig(defaultConfig());
+}
+refreshScenarioSelect();
+injectHelpIcons();
+render();
+</script>
+</body>
+</html>
