@@ -296,19 +296,13 @@
   .warn { color: var(--danger); font-size: 11px; margin-top: 4px; }
   .hint { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
 
-  /* Theme toggle */
-  .theme-toggle {
+  /* Theme / language toggles */
+  .theme-toggle, .lang-toggle {
     position: fixed;
     top: 20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border-radius: 50%;
     background: var(--panel);
     border: 1px solid var(--border-strong);
     color: var(--text-soft);
-    font-size: 18px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -316,8 +310,27 @@
     box-shadow: var(--shadow);
     z-index: 50;
     transition: all 0.15s;
+    font-family: inherit;
+  }
+  .theme-toggle {
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 18px;
   }
   .theme-toggle:hover { background: var(--panel-2); transform: rotate(15deg); }
+  .lang-toggle {
+    right: 68px;
+    height: 40px;
+    padding: 0 13px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+  .lang-toggle:hover { background: var(--panel-2); }
 
   /* MC stats panel */
   .mc-stats {
@@ -418,184 +431,169 @@
 </style>
 </head>
 <body>
+<button class="lang-toggle" id="langToggle" title="Change language / Cambiar idioma">ES</button>
 <button class="theme-toggle" id="themeToggle" title="Toggle theme">☾</button>
 
 <div class="modal-backdrop" id="helpModal">
   <div class="modal" role="dialog" aria-modal="true">
     <h3 id="helpTitle"></h3>
     <div class="body" id="helpBody"></div>
-    <div class="modal-close"><button id="helpClose">Got it</button></div>
+    <div class="modal-close"><button id="helpClose" data-i18n="btn_helpClose">Got it</button></div>
   </div>
 </div>
 
 <div class="app">
   <aside>
-    <h1>Net Worth</h1>
-    <div class="subtitle">Project your wealth with compound interest, inflation, withdrawals, Monte Carlo, and Spanish capital-gains tax.</div>
+    <h1 data-i18n="title">Net Worth</h1>
+    <div class="subtitle" data-i18n="subtitle">Project your wealth with compound interest, inflation, withdrawals, Monte Carlo, and Spanish capital-gains tax.</div>
 
-    <h2 data-help="scenarios">Scenarios</h2>
-    <div class="scenario-row">
-      <select id="scenarioSelect"><option value="">— current (unsaved) —</option></select>
-      <button class="secondary small" id="loadScenario" title="Load">Load</button>
-    </div>
-    <div class="actions" style="margin-top: 0; gap: 6px;">
-      <button class="secondary small" id="saveScenario">Save as…</button>
-      <button class="secondary small" id="deleteScenario">Delete</button>
-      <button class="secondary small" id="overlayScenario" title="Overlay selected on chart">Overlay</button>
-      <button class="secondary small" id="exportJson">Export</button>
-      <button class="secondary small" id="importJson">Import</button>
-      <button class="secondary small" id="copyLink" title="Copy a shareable link to this scenario">Copy link</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none" />
-    </div>
-    <div class="overlay-chips" id="overlayChips"></div>
-
-    <h2 data-help="portfolio">Portfolio</h2>
+    <h2 data-help="portfolio" data-i18n="sec_portfolio">Portfolio</h2>
     <div class="field">
-      <label data-help="initial">Initial capital (€)</label>
+      <label data-help="initial" data-i18n="lbl_initial">Initial capital (€)</label>
       <input type="number" id="initial" value="10000" step="100" />
     </div>
     <div class="row">
       <div>
-        <label data-help="monthly">Monthly contribution (€)</label>
+        <label data-help="monthly" data-i18n="lbl_monthly">Monthly contribution (€)</label>
         <input type="number" id="monthly" value="500" step="10" />
       </div>
       <div>
-        <label data-help="contribGrowth">Contribution growth / year (%)</label>
+        <label data-help="contribGrowth" data-i18n="lbl_contribGrowth">Contribution growth / year (%)</label>
         <input type="number" id="contribGrowth" value="0" step="0.5" />
       </div>
     </div>
     <div class="field">
-      <label data-help="years">Years</label>
+      <label data-help="years" data-i18n="lbl_years">Years</label>
       <input type="number" id="years" value="30" step="1" min="1" max="80" />
     </div>
 
-    <h2 data-help="buckets">Asset buckets</h2>
-    <div class="hint">Allocations are normalized to 100%. Per-bucket returns and volatility feed the compounding and Monte Carlo models.</div>
+    <h2 data-help="buckets" data-i18n="sec_buckets">Asset buckets</h2>
+    <div class="hint" data-i18n="hint_buckets">Allocations are normalized to 100%. Per-bucket returns and volatility feed the compounding and Monte Carlo models.</div>
     <div id="buckets" style="margin-top: 10px;"></div>
-    <button class="secondary small" id="addBucket">+ Add bucket</button>
+    <button class="secondary small" id="addBucket" data-i18n="btn_addBucket">+ Add bucket</button>
     <div class="check" style="margin-top: 12px;">
       <input type="checkbox" id="rebalance" />
-      <label for="rebalance" data-help="rebalance">Rebalance annually (triggers taxable events)</label>
+      <label for="rebalance" data-help="rebalance" data-i18n="chk_rebalance">Rebalance annually (triggers taxable events)</label>
     </div>
 
-    <h2 data-help="inflation">Inflation</h2>
+    <h2 data-help="inflation" data-i18n="sec_inflation">Inflation</h2>
     <div class="check">
       <input type="checkbox" id="inflationOn" checked />
-      <label for="inflationOn" data-help="inflationOn">Adjust for inflation</label>
+      <label for="inflationOn" data-help="inflationOn" data-i18n="chk_inflationOn">Adjust for inflation</label>
     </div>
     <div class="row">
       <div>
-        <label data-help="inflation">Annual inflation (%)</label>
+        <label data-help="inflation" data-i18n="lbl_inflation">Annual inflation (%)</label>
         <input type="number" id="inflation" value="2.5" step="0.1" />
       </div>
       <div>
-        <label data-help="displayMode">Display</label>
+        <label data-help="displayMode" data-i18n="lbl_display">Display</label>
         <select id="displayMode">
-          <option value="both">Nominal + Real</option>
-          <option value="nominal">Nominal only</option>
-          <option value="real">Real only</option>
+          <option value="both" data-i18n="opt_displayBoth">Nominal + Real</option>
+          <option value="nominal" data-i18n="opt_displayNominal">Nominal only</option>
+          <option value="real" data-i18n="opt_displayReal">Real only</option>
         </select>
       </div>
     </div>
 
-    <h2 data-help="montecarlo">Monte Carlo</h2>
+    <h2 data-help="montecarlo" data-i18n="sec_montecarlo">Monte Carlo</h2>
     <div class="check">
       <input type="checkbox" id="mcOn" />
-      <label for="mcOn" data-help="montecarlo">Run Monte Carlo (show P10 / P50 / P90)</label>
+      <label for="mcOn" data-help="montecarlo" data-i18n="chk_mcOn">Run Monte Carlo (show P10 / P50 / P90)</label>
     </div>
     <div class="row">
       <div>
-        <label data-help="mcRuns">Runs</label>
+        <label data-help="mcRuns" data-i18n="lbl_mcRuns">Runs</label>
         <input type="number" id="mcRuns" value="400" step="50" min="50" max="5000" />
       </div>
       <div>
-        <label data-help="mcSeed">Seed (optional)</label>
+        <label data-help="mcSeed" data-i18n="lbl_mcSeed">Seed (optional)</label>
         <input type="number" id="mcSeed" value="42" step="1" />
       </div>
     </div>
     <div class="check">
       <input type="checkbox" id="showWorstPaths" />
-      <label for="showWorstPaths" data-help="showWorstPaths">Show worst 5 paths (sequence-of-returns)</label>
+      <label for="showWorstPaths" data-help="showWorstPaths" data-i18n="chk_worstPaths">Show worst 5 paths (sequence-of-returns)</label>
     </div>
 
-    <h2 data-help="mode">Mode</h2>
+    <h2 data-help="mode" data-i18n="sec_mode">Mode</h2>
     <div class="mode-tabs">
-      <button data-mode="accum" class="active">Accumulation</button>
-      <button data-mode="fire">FIRE solver</button>
+      <button data-mode="accum" class="active" data-i18n="tab_accum">Accumulation</button>
+      <button data-mode="fire" data-i18n="tab_fire">FIRE solver</button>
     </div>
 
     <div id="accumPanel">
       <div class="row">
         <div>
-          <label data-help="withdrawal">Monthly withdrawal (€)</label>
+          <label data-help="withdrawal" data-i18n="lbl_withdrawal">Monthly withdrawal (€)</label>
           <input type="number" id="withdrawal" value="0" step="50" />
         </div>
         <div>
-          <label data-help="withdrawStart">Start year</label>
+          <label data-help="withdrawStart" data-i18n="lbl_withdrawStart">Start year</label>
           <input type="number" id="withdrawStart" value="20" step="1" min="0" />
         </div>
       </div>
       <div class="check">
         <input type="checkbox" id="withdrawReal" />
-        <label for="withdrawReal" data-help="withdrawReal">Keep withdrawal real (inflation-adjusted)</label>
+        <label for="withdrawReal" data-help="withdrawReal" data-i18n="chk_withdrawReal">Keep withdrawal real (inflation-adjusted)</label>
       </div>
     </div>
 
     <div id="firePanel" style="display:none;">
-      <div class="hint">Finds the earliest start year at which the portfolio sustains the target withdrawal for the target duration without depletion.</div>
+      <div class="hint" data-i18n="hint_fireSolver">Finds the earliest start year at which the portfolio sustains the target withdrawal for the target duration without depletion.</div>
       <div class="row">
         <div>
-          <label data-help="fireTarget">Target monthly withdrawal (€, real)</label>
+          <label data-help="fireTarget" data-i18n="lbl_fireTarget">Target monthly withdrawal (€, real)</label>
           <input type="number" id="fireTarget" value="2500" step="100" />
         </div>
         <div>
-          <label data-help="fireDuration">Duration (years)</label>
+          <label data-help="fireDuration" data-i18n="lbl_fireDuration">Duration (years)</label>
           <input type="number" id="fireDuration" value="30" step="1" />
         </div>
       </div>
-      <button id="solveFire">Solve</button>
+      <button id="solveFire" data-i18n="btn_solveFire">Solve</button>
       <div id="fireResult"></div>
     </div>
 
-    <h2 data-help="expenses">Expenses</h2>
+    <h2 data-help="expenses" data-i18n="sec_expenses">Expenses</h2>
     <div id="expenses"></div>
-    <button class="secondary small" id="addExpense">+ Add one-time</button>
-    <button class="secondary small" id="addRecurring">+ Add recurring</button>
+    <button class="secondary small" id="addExpense" data-i18n="btn_addExpense">+ Add one-time</button>
+    <button class="secondary small" id="addRecurring" data-i18n="btn_addRecurring">+ Add recurring</button>
 
-    <h2 data-help="taxes">Taxes (Spain)</h2>
+    <h2 data-help="taxes" data-i18n="sec_taxes">Taxes (Spain)</h2>
     <div class="check">
       <input type="checkbox" id="taxOn" checked />
-      <label for="taxOn" data-help="taxOn">Apply capital-gains tax on withdrawals</label>
+      <label for="taxOn" data-help="taxOn" data-i18n="chk_taxOn">Apply capital-gains tax on withdrawals</label>
     </div>
     <div class="check">
       <input type="checkbox" id="fifoLots" checked />
-      <label for="fifoLots" data-help="fifoLots">Use FIFO lot tracking (more accurate)</label>
+      <label for="fifoLots" data-help="fifoLots" data-i18n="chk_fifoLots">Use FIFO lot tracking (more accurate)</label>
     </div>
     <div class="field">
-      <label data-help="marginalRate">Marginal income tax rate (%)</label>
+      <label data-help="marginalRate" data-i18n="lbl_marginalRate">Marginal income tax rate (%)</label>
       <input type="number" id="marginalRate" value="37" step="1" min="0" max="50" />
-      <div class="hint">Used for pension contribution deduction (capped at €1,500/year) and pension withdrawal tax.</div>
+      <div class="hint" data-i18n="hint_marginalRate">Used for pension contribution deduction (capped at €1,500/year) and pension withdrawal tax.</div>
     </div>
-    <h2 data-help="wealthTax" style="margin-top: 16px;">Wealth tax (Patrimonio)</h2>
+    <h2 data-help="wealthTax" data-i18n="sec_wealth_tax" style="margin-top: 16px;">Wealth tax (Patrimonio)</h2>
     <div class="check">
       <input type="checkbox" id="wealthTaxOn" />
-      <label for="wealthTaxOn" data-help="wealthTaxOn">Apply Spanish wealth tax annually</label>
+      <label for="wealthTaxOn" data-help="wealthTaxOn" data-i18n="chk_wealthTaxOn">Apply Spanish wealth tax annually</label>
     </div>
     <div class="row">
       <div>
-        <label data-help="wealthExemption">Exemption (€)</label>
+        <label data-help="wealthExemption" data-i18n="lbl_wealthExemption">Exemption (€)</label>
         <input type="number" id="wealthExemption" value="700000" step="10000" />
       </div>
       <div>
-        <label data-help="wealthFromPortfolio">Pay from</label>
+        <label data-help="wealthFromPortfolio" data-i18n="lbl_wealthFrom">Pay from</label>
         <select id="wealthFromPortfolio">
-          <option value="portfolio">Portfolio</option>
-          <option value="external">External income</option>
+          <option value="portfolio" data-i18n="opt_wealthPortfolio">Portfolio</option>
+          <option value="external" data-i18n="opt_wealthExternal">External income</option>
         </select>
       </div>
     </div>
     <details>
-      <summary>Wealth tax brackets (state default)</summary>
+      <summary data-i18n="sum_wealthBrackets">Wealth tax brackets (state default)</summary>
       <table class="bracket-table">
         <tr><td>0 – 167k €</td><td>0.2%</td></tr>
         <tr><td>167k – 334k €</td><td>0.3%</td></tr>
@@ -609,7 +607,7 @@
     </details>
 
     <details>
-      <summary>Savings-income brackets (2026)</summary>
+      <summary data-i18n="sum_savingsBrackets">Savings-income brackets (2026)</summary>
       <table class="bracket-table">
         <tr><td>0 – 6,000 €</td><td>19%</td></tr>
         <tr><td>6,000 – 50,000 €</td><td>21%</td></tr>
@@ -619,31 +617,47 @@
       </table>
     </details>
 
+    <h2 data-help="scenarios" data-i18n="sec_scenarios">Scenarios</h2>
+    <div class="scenario-row">
+      <select id="scenarioSelect"><option value="" data-i18n="scn_current">— current (unsaved) —</option></select>
+      <button class="secondary small" id="loadScenario" title="Load" data-i18n="btn_scenarioLoad">Load</button>
+    </div>
+    <div class="actions" style="margin-top: 0; gap: 6px;">
+      <button class="secondary small" id="saveScenario" data-i18n="btn_saveScenario">Save as…</button>
+      <button class="secondary small" id="deleteScenario" data-i18n="btn_deleteScenario">Delete</button>
+      <button class="secondary small" id="overlayScenario" title="Overlay selected on chart" data-i18n="btn_overlay">Overlay</button>
+      <button class="secondary small" id="exportJson" data-i18n="btn_exportJson">Export</button>
+      <button class="secondary small" id="importJson" data-i18n="btn_importJson">Import</button>
+      <button class="secondary small" id="copyLink" title="Copy a shareable link to this scenario" data-i18n="btn_copyLink">Copy link</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" />
+    </div>
+    <div class="overlay-chips" id="overlayChips"></div>
+
     <div class="actions">
-      <button id="run">Recalculate</button>
-      <button class="secondary" id="reset">Reset</button>
+      <button id="run" data-i18n="btn_run">Recalculate</button>
+      <button class="secondary" id="reset" data-i18n="btn_reset">Reset</button>
     </div>
   </aside>
 
   <main>
     <div class="stats">
       <div class="stat">
-        <div class="label">Final Balance <span class="tag" id="tagFinal">nominal</span></div>
+        <div class="label" data-i18n="stat_finalBalance">Final Balance <span class="tag" id="tagFinal">nominal</span></div>
         <div class="value" id="finalBalance">–</div>
         <div class="sub" id="finalBalanceReal">–</div>
       </div>
       <div class="stat">
-        <div class="label">Total Contributed</div>
+        <div class="label" data-i18n="stat_contributed">Total Contributed</div>
         <div class="value" id="totalContributed">–</div>
         <div class="sub" id="totalContribSub">–</div>
       </div>
       <div class="stat">
-        <div class="label">Total Withdrawn (net)</div>
+        <div class="label" data-i18n="stat_withdrawn">Total Withdrawn (net)</div>
         <div class="value" id="totalWithdrawn">–</div>
         <div class="sub" id="totalWithdrawnGross">–</div>
       </div>
       <div class="stat">
-        <div class="label">Total Taxes Paid</div>
+        <div class="label" data-i18n="stat_taxes">Total Taxes Paid</div>
         <div class="value" id="totalTax">–</div>
         <div class="sub" id="totalTaxSub">–</div>
       </div>
@@ -651,24 +665,24 @@
 
     <div class="mc-stats hidden" id="mcStats">
       <div class="stat mc-stat">
-        <div class="label">Success Rate</div>
+        <div class="label" data-i18n="stat_successRate">Success Rate</div>
         <div class="value" id="mcSuccess">–</div>
-        <div class="sub">paths that survived</div>
+        <div class="sub" data-i18n="sub_pathsSurvived">paths that survived</div>
       </div>
       <div class="stat mc-stat">
-        <div class="label">Median Outcome</div>
+        <div class="label" data-i18n="stat_medianOutcome">Median Outcome</div>
         <div class="value" id="mcMedian">–</div>
-        <div class="sub" id="mcMedianSub">P50 final</div>
+        <div class="sub" id="mcMedianSub" data-i18n="sub_medianP50">P50 final</div>
       </div>
       <div class="stat mc-stat">
-        <div class="label">Worst Drawdown</div>
+        <div class="label" data-i18n="stat_worstDrawdown">Worst Drawdown</div>
         <div class="value" id="mcDrawdown">–</div>
-        <div class="sub">max peak-to-trough</div>
+        <div class="sub" data-i18n="sub_peakToTrough">max peak-to-trough</div>
       </div>
       <div class="stat mc-stat">
-        <div class="label">Median Depletion</div>
+        <div class="label" data-i18n="stat_medianDepletion">Median Depletion</div>
         <div class="value" id="mcDepletion">–</div>
-        <div class="sub" id="mcDepletionSub">among failed paths</div>
+        <div class="sub" id="mcDepletionSub" data-i18n="sub_failedPaths">among failed paths</div>
       </div>
     </div>
 
@@ -678,10 +692,10 @@
 
     <div class="table-wrap">
       <div class="table-head">
-        <h3>Year-by-year</h3>
+        <h3 data-i18n="tbl_yearByYear">Year-by-year</h3>
         <div>
-          <button class="secondary small" id="toggleTable">Show</button>
-          <button class="secondary small" id="exportCsv">Export CSV</button>
+          <button class="secondary small" id="toggleTable" data-i18n="tbl_show">Show</button>
+          <button class="secondary small" id="exportCsv" data-i18n="btn_exportCsv">Export CSV</button>
         </div>
       </div>
       <div id="tableContainer" style="display:none;"></div>
@@ -1172,18 +1186,31 @@ function monteCarlo(cfg, runs, seed) {
 // the target real withdrawal for the target duration.
 // =====================================================================
 function solveFire(baseCfg, targetMonthly, durationYears) {
-  // Build a test: at startYear X, accumulate X years, then withdraw targetMonthly (real) for durationYears.
+  // Two-phase test: accumulate X years, then withdraw from that balance with no further contributions.
+  // The single-sim approach was broken because contributions continued during withdrawal,
+  // making the portfolio nearly impossible to deplete.
   function testStartYear(X) {
-    const testCfg = {
+    const accumCfg = {
       ...baseCfg,
-      years: X + durationYears,
-      withdrawal: targetMonthly,
-      withdrawStart: X,
-      withdrawReal: true,
-      rebalance: baseCfg.rebalance,
+      years: X,
+      withdrawal: 0,
+      withdrawStart: 0,
       expenses: [],
     };
-    const r = simulate(testCfg);
+    const accum = simulate(accumCfg);
+
+    const withdrawCfg = {
+      ...baseCfg,
+      initial: accum.finalNominal,
+      years: durationYears,
+      monthly: 0,
+      contribGrowth: 0,
+      withdrawal: targetMonthly,
+      withdrawStart: 0,
+      withdrawReal: true,
+      expenses: [],
+    };
+    const r = simulate(withdrawCfg);
     return r.finalNominal > 0;
   }
   let lo = 1, hi = 80;
@@ -1293,25 +1320,25 @@ function addBucket(b = {}) {
     </div>
     <div class="bucket-grid">
       <div>
-        <label data-help="allocation">Allocation %</label>
+        <label data-help="allocation">${t('bkt_alloc')}</label>
         <input class="b-alloc" type="number" value="${b.allocation != null ? b.allocation * 100 : 100}" step="5" />
       </div>
       <div>
-        <label data-help="return">Return %</label>
+        <label data-help="return">${t('bkt_return')}</label>
         <input class="b-rate" type="number" value="${b.rate != null ? b.rate * 100 : 8}" step="0.1" />
       </div>
       <div>
-        <label data-help="volatility">Volatility %</label>
+        <label data-help="volatility">${t('bkt_vol')}</label>
         <input class="b-vol" type="number" value="${b.vol != null ? b.vol * 100 : 15}" step="0.5" />
       </div>
     </div>
     <div class="bucket-type">
-      <label data-help="bucketType" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Type</label>
+      <label data-help="bucketType" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">${t('bkt_type')}</label>
       <select class="b-type">
-        <option value="equity">Equity / ETF</option>
-        <option value="bond">Bond</option>
-        <option value="cash">Cash</option>
-        <option value="pension">Pension plan</option>
+        <option value="equity">${t('bkt_equity')}</option>
+        <option value="bond">${t('bkt_bond')}</option>
+        <option value="cash">${t('bkt_cash')}</option>
+        <option value="pension">${t('bkt_pension')}</option>
       </select>
     </div>
   `;
@@ -1358,7 +1385,7 @@ function addOneTime(name = '', amount = '', month = '') {
     <input type="text" placeholder="Label" value="${escapeAttr(name)}" />
     <input type="number" placeholder="€" value="${amount}" />
     <input type="number" placeholder="Month" value="${month}" title="Month number (1 = first month)" />
-    <span style="font-size:10px;color:var(--muted);text-align:center;">one</span>
+    <span style="font-size:10px;color:var(--muted);text-align:center;">${t('exp_oneLabel')}</span>
     <button class="danger">×</button>
   `;
   row.querySelector('button').onclick = () => { row.remove(); render(); };
@@ -1408,10 +1435,10 @@ document.getElementById('solveFire').onclick = () => {
   const el = document.getElementById('fireResult');
   if (!res.success) {
     el.className = 'fire-result fail';
-    el.innerHTML = `<div class="big">Not achievable</div><div class="hint">Even at 80 years of contributions, the portfolio can't sustain €${cfg.fire.target}/mo (real) for ${cfg.fire.duration} years with current parameters. Try raising contributions or return rate, or lowering the target.</div>`;
+    el.innerHTML = `<div class="big">${t('dyn_fireNotAchievable')}</div><div class="hint">${t('dyn_fireHintFail')(cfg.fire.target, cfg.fire.duration)}</div>`;
   } else {
     el.className = 'fire-result';
-    el.innerHTML = `<div class="big">${res.years} years of contributions</div><div class="hint">…to sustain €${cfg.fire.target}/mo (real) for ${cfg.fire.duration} years.</div>`;
+    el.innerHTML = `<div class="big">${t('dyn_fireYears')(res.years)}</div><div class="hint">${t('dyn_fireHintOk')(cfg.fire.target, cfg.fire.duration)}</div>`;
   }
 };
 
@@ -1424,7 +1451,7 @@ function saveStore(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
 function refreshScenarioSelect() {
   const store = loadStore();
   const sel = document.getElementById('scenarioSelect');
-  sel.innerHTML = '<option value="">— current (unsaved) —</option>';
+  sel.innerHTML = `<option value="">${t('scn_current')}</option>`;
   for (const name of Object.keys(store).sort()) {
     const o = document.createElement('option');
     o.value = name; o.textContent = name;
@@ -1538,18 +1565,18 @@ function render() {
   // Stats
   document.getElementById('finalBalance').textContent = fmt.format(r.finalNominal);
   document.getElementById('finalBalanceReal').textContent =
-    cfg.inflation > 0 ? 'real: ' + fmt.format(r.finalReal) : '';
+    cfg.inflation > 0 ? t('dyn_real') + fmt.format(r.finalReal) : '';
   document.getElementById('totalContributed').textContent = fmt.format(r.totalContributed);
   const totalGain = r.finalNominal + r.totalWithdrawnGross - r.totalContributed;
-  document.getElementById('totalContribSub').textContent = 'gain: ' + fmt.format(totalGain);
+  document.getElementById('totalContribSub').textContent = t('dyn_gain') + fmt.format(totalGain);
   document.getElementById('totalWithdrawn').textContent = fmt.format(r.totalWithdrawnNet);
-  document.getElementById('totalWithdrawnGross').textContent = 'gross: ' + fmt.format(r.totalWithdrawnGross);
+  document.getElementById('totalWithdrawnGross').textContent = t('dyn_gross') + fmt.format(r.totalWithdrawnGross);
   const totalTax = r.totalCapGainsTax + r.totalPensionIncomeTax + r.totalWealthTax;
   document.getElementById('totalTax').textContent = fmt.format(totalTax);
   const subParts = [];
-  if (r.totalTaxSavings > 0) subParts.push('pension savings: ' + fmt.format(r.totalTaxSavings));
-  if (r.totalWealthTax > 0) subParts.push('wealth: ' + fmt.format(r.totalWealthTax));
-  document.getElementById('totalTaxSub').textContent = subParts.join(' · ') || 'on realized gains';
+  if (r.totalTaxSavings > 0) subParts.push(t('dyn_pensionSavings') + fmt.format(r.totalTaxSavings));
+  if (r.totalWealthTax > 0) subParts.push(t('dyn_wealth') + fmt.format(r.totalWealthTax));
+  document.getElementById('totalTaxSub').textContent = subParts.join(' · ') || t('dyn_onGains');
 
   // Theme-aware chart colors
   const css = getComputedStyle(document.documentElement);
@@ -1596,8 +1623,8 @@ function render() {
       mc.medianDepletionYear != null ? 'Y' + mc.medianDepletionYear : '—';
     document.getElementById('mcDepletionSub').textContent =
       mc.medianDepletionYear != null
-        ? `${runsFailed(mc)} of ${cfg.mcRuns} runs failed`
-        : 'no runs depleted';
+        ? t('dyn_runsFailed')(runsFailed(mc), cfg.mcRuns)
+        : t('dyn_noRunsDepleted');
   } else {
     mcPanel.classList.add('hidden');
   }
@@ -1638,7 +1665,7 @@ function render() {
     if (cfg.showWorstPaths && mc.worst) {
       mc.worst.forEach((path, i) => {
         datasets.push({
-          label: i === 0 ? 'Worst 5 paths' : '_worst' + i,
+          label: i === 0 ? t('chart_worst') : '_worst' + i,
           data: path,
           borderColor: 'rgba(180,74,58,0.45)',
           fill: false,
@@ -1653,7 +1680,7 @@ function render() {
   // Deterministic main series
   if (mode === 'nominal' || mode === 'both') {
     datasets.push({
-      label: 'Net worth (nominal)',
+      label: t('chart_nominal'),
       data: r.snapshots.nominal,
       borderColor: CL.accent,
       backgroundColor: accentSoft,
@@ -1665,7 +1692,7 @@ function render() {
   }
   if ((mode === 'real' || mode === 'both') && cfg.inflation > 0) {
     datasets.push({
-      label: 'Net worth (real)',
+      label: t('chart_real'),
       data: r.snapshots.real,
       borderColor: CL.accent2,
       backgroundColor: hexToRgba(CL.accent2, 0.1),
@@ -1676,7 +1703,7 @@ function render() {
     });
   }
   datasets.push({
-    label: 'Total contributed',
+    label: t('chart_contributed'),
     data: r.snapshots.contributed,
     borderColor: CL.muted,
     borderDash: [4, 4],
@@ -1690,7 +1717,7 @@ function render() {
   for (const o of overlays) {
     const or = simulate(o.cfg);
     datasets.push({
-      label: 'Overlay: ' + o.name,
+      label: t('chart_overlay') + o.name,
       data: or.snapshots.nominal,
       borderColor: o.color,
       fill: false,
@@ -1760,8 +1787,8 @@ function renderTable(r) {
   const tc = document.getElementById('tableContainer');
   let html = `<div class="scroll-table"><table class="year-table">
     <thead><tr>
-      <th>Year</th><th>Balance</th><th>Real</th><th>Contributed</th>
-      <th>Withdrawn (net)</th><th>Cap-gains tax</th><th>Pension tax</th>
+      <th>${t('tbl_year')}</th><th>${t('tbl_balance')}</th><th>${t('tbl_real')}</th><th>${t('tbl_contributed')}</th>
+      <th>${t('tbl_withdrawn')}</th><th>${t('tbl_capTax')}</th><th>${t('tbl_pensionTax')}</th>
     </tr></thead><tbody>`;
   for (const y of r.snapshots.yearly) {
     html += `<tr>
@@ -1783,11 +1810,11 @@ document.getElementById('toggleTable').onclick = () => {
   const btn = document.getElementById('toggleTable');
   if (tc.style.display === 'none') {
     tc.style.display = '';
-    btn.textContent = 'Hide';
+    btn.textContent = t('tbl_hide');
     if (lastResult) renderTable(lastResult.r);
   } else {
     tc.style.display = 'none';
-    btn.textContent = 'Show';
+    btn.textContent = t('tbl_show');
   }
 };
 
@@ -1892,7 +1919,7 @@ document.getElementById('copyLink').onclick = () => {
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.getElementById('copyLink');
     const orig = btn.textContent;
-    btn.textContent = 'Copied!';
+    btn.textContent = t('dyn_copied');
     btn.classList.add('flash');
     setTimeout(() => { btn.textContent = orig; btn.classList.remove('flash'); }, 1200);
   }).catch(() => {
@@ -2205,12 +2232,288 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// =====================================================================
+// i18n — translations and language toggle
+// =====================================================================
+const TRANSLATIONS = {
+  en: {
+    title: 'Net Worth',
+    subtitle: 'Project your wealth with compound interest, inflation, withdrawals, Monte Carlo, and Spanish capital-gains tax.',
+    sec_portfolio: 'Portfolio',
+    sec_buckets: 'Asset buckets',
+    sec_inflation: 'Inflation',
+    sec_montecarlo: 'Monte Carlo',
+    sec_mode: 'Mode',
+    sec_expenses: 'Expenses',
+    sec_taxes: 'Taxes (Spain)',
+    sec_wealth_tax: 'Wealth tax (Patrimonio)',
+    sec_scenarios: 'Scenarios',
+    lbl_initial: 'Initial capital (€)',
+    lbl_monthly: 'Monthly contribution (€)',
+    lbl_contribGrowth: 'Contribution growth / year (%)',
+    lbl_years: 'Years',
+    lbl_inflation: 'Annual inflation (%)',
+    lbl_display: 'Display',
+    lbl_mcRuns: 'Runs',
+    lbl_mcSeed: 'Seed (optional)',
+    lbl_withdrawal: 'Monthly withdrawal (€)',
+    lbl_withdrawStart: 'Start year',
+    lbl_fireTarget: 'Target monthly withdrawal (€, real)',
+    lbl_fireDuration: 'Duration (years)',
+    lbl_marginalRate: 'Marginal income tax rate (%)',
+    lbl_wealthExemption: 'Exemption (€)',
+    lbl_wealthFrom: 'Pay from',
+    chk_rebalance: 'Rebalance annually (triggers taxable events)',
+    chk_inflationOn: 'Adjust for inflation',
+    chk_mcOn: 'Run Monte Carlo (show P10 / P50 / P90)',
+    chk_worstPaths: 'Show worst 5 paths (sequence-of-returns)',
+    chk_withdrawReal: 'Keep withdrawal real (inflation-adjusted)',
+    chk_taxOn: 'Apply capital-gains tax on withdrawals',
+    chk_fifoLots: 'Use FIFO lot tracking (more accurate)',
+    chk_wealthTaxOn: 'Apply Spanish wealth tax annually',
+    btn_addBucket: '+ Add bucket',
+    btn_solveFire: 'Solve',
+    btn_addExpense: '+ Add one-time',
+    btn_addRecurring: '+ Add recurring',
+    btn_scenarioLoad: 'Load',
+    btn_saveScenario: 'Save as…',
+    btn_deleteScenario: 'Delete',
+    btn_overlay: 'Overlay',
+    btn_exportJson: 'Export',
+    btn_importJson: 'Import',
+    btn_copyLink: 'Copy link',
+    btn_run: 'Recalculate',
+    btn_reset: 'Reset',
+    btn_helpClose: 'Got it',
+    btn_exportCsv: 'Export CSV',
+    opt_displayBoth: 'Nominal + Real',
+    opt_displayNominal: 'Nominal only',
+    opt_displayReal: 'Real only',
+    opt_wealthPortfolio: 'Portfolio',
+    opt_wealthExternal: 'External income',
+    tab_accum: 'Accumulation',
+    tab_fire: 'FIRE solver',
+    hint_buckets: 'Allocations are normalized to 100%. Per-bucket returns and volatility feed the compounding and Monte Carlo models.',
+    hint_fireSolver: 'Finds the earliest start year at which the portfolio sustains the target withdrawal for the target duration without depletion.',
+    hint_marginalRate: 'Used for pension contribution deduction (capped at €1,500/year) and pension withdrawal tax.',
+    sum_wealthBrackets: 'Wealth tax brackets (state default)',
+    sum_savingsBrackets: 'Savings-income brackets (2026)',
+    stat_finalBalance: 'Final Balance',
+    stat_contributed: 'Total Contributed',
+    stat_withdrawn: 'Total Withdrawn (net)',
+    stat_taxes: 'Total Taxes Paid',
+    stat_successRate: 'Success Rate',
+    stat_medianOutcome: 'Median Outcome',
+    stat_worstDrawdown: 'Worst Drawdown',
+    stat_medianDepletion: 'Median Depletion',
+    sub_pathsSurvived: 'paths that survived',
+    sub_peakToTrough: 'max peak-to-trough',
+    sub_failedPaths: 'among failed paths',
+    sub_medianP50: 'P50 final',
+    tbl_yearByYear: 'Year-by-year',
+    tbl_show: 'Show',
+    tbl_hide: 'Hide',
+    tbl_year: 'Year',
+    tbl_balance: 'Balance',
+    tbl_real: 'Real',
+    tbl_contributed: 'Contributed',
+    tbl_withdrawn: 'Withdrawn (net)',
+    tbl_capTax: 'Cap-gains tax',
+    tbl_pensionTax: 'Pension tax',
+    dyn_gain: 'gain: ',
+    dyn_real: 'real: ',
+    dyn_gross: 'gross: ',
+    dyn_onGains: 'on realized gains',
+    dyn_pensionSavings: 'pension savings: ',
+    dyn_wealth: 'wealth: ',
+    dyn_copied: 'Copied!',
+    dyn_fireNotAchievable: 'Not achievable',
+    dyn_fireHintFail: (target, duration) => `Even at 80 years of contributions, the portfolio can't sustain €${target}/mo (real) for ${duration} years with current parameters. Try raising contributions or return rate, or lowering the target.`,
+    dyn_fireYears: (years) => `${years} years of contributions`,
+    dyn_fireHintOk: (target, duration) => `…to sustain €${target}/mo (real) for ${duration} years.`,
+    dyn_noRunsDepleted: 'no runs depleted',
+    dyn_runsFailed: (n, total) => `${n} of ${total} runs failed`,
+    chart_nominal: 'Net worth (nominal)',
+    chart_real: 'Net worth (real)',
+    chart_contributed: 'Total contributed',
+    chart_worst: 'Worst 5 paths',
+    chart_overlay: 'Overlay: ',
+    bkt_alloc: 'Allocation %',
+    bkt_return: 'Return %',
+    bkt_vol: 'Volatility %',
+    bkt_type: 'Type',
+    bkt_equity: 'Equity / ETF',
+    bkt_bond: 'Bond',
+    bkt_cash: 'Cash',
+    bkt_pension: 'Pension plan',
+    exp_oneLabel: 'one',
+    scn_current: '— current (unsaved) —',
+  },
+  es: {
+    title: 'Patrimonio Neto',
+    subtitle: 'Proyecta tu riqueza con interés compuesto, inflación, retiradas, Monte Carlo e impuesto sobre plusvalías (España).',
+    sec_portfolio: 'Cartera',
+    sec_buckets: 'Cestas de activos',
+    sec_inflation: 'Inflación',
+    sec_montecarlo: 'Monte Carlo',
+    sec_mode: 'Modo',
+    sec_expenses: 'Gastos',
+    sec_taxes: 'Impuestos (España)',
+    sec_wealth_tax: 'Impuesto sobre el Patrimonio',
+    sec_scenarios: 'Escenarios',
+    lbl_initial: 'Capital inicial (€)',
+    lbl_monthly: 'Aportación mensual (€)',
+    lbl_contribGrowth: 'Crecimiento aportación / año (%)',
+    lbl_years: 'Años',
+    lbl_inflation: 'Inflación anual (%)',
+    lbl_display: 'Mostrar',
+    lbl_mcRuns: 'Simulaciones',
+    lbl_mcSeed: 'Semilla (opcional)',
+    lbl_withdrawal: 'Retirada mensual (€)',
+    lbl_withdrawStart: 'Año de inicio',
+    lbl_fireTarget: 'Retirada mensual objetivo (€, real)',
+    lbl_fireDuration: 'Duración (años)',
+    lbl_marginalRate: 'Tipo marginal IRPF (%)',
+    lbl_wealthExemption: 'Exención (€)',
+    lbl_wealthFrom: 'Pagar desde',
+    chk_rebalance: 'Rebalancear anualmente (genera hechos imponibles)',
+    chk_inflationOn: 'Ajustar por inflación',
+    chk_mcOn: 'Ejecutar Monte Carlo (mostrar P10 / P50 / P90)',
+    chk_worstPaths: 'Mostrar 5 peores trayectorias (riesgo de secuencia)',
+    chk_withdrawReal: 'Mantener retirada real (ajustada por inflación)',
+    chk_taxOn: 'Aplicar impuesto sobre plusvalías en retiradas',
+    chk_fifoLots: 'Usar seguimiento FIFO de lotes (más preciso)',
+    chk_wealthTaxOn: 'Aplicar impuesto sobre el patrimonio anualmente',
+    btn_addBucket: '+ Añadir cesta',
+    btn_solveFire: 'Calcular',
+    btn_addExpense: '+ Añadir puntual',
+    btn_addRecurring: '+ Añadir recurrente',
+    btn_scenarioLoad: 'Cargar',
+    btn_saveScenario: 'Guardar como…',
+    btn_deleteScenario: 'Eliminar',
+    btn_overlay: 'Superponer',
+    btn_exportJson: 'Exportar',
+    btn_importJson: 'Importar',
+    btn_copyLink: 'Copiar enlace',
+    btn_run: 'Recalcular',
+    btn_reset: 'Restablecer',
+    btn_helpClose: 'Entendido',
+    btn_exportCsv: 'Exportar CSV',
+    opt_displayBoth: 'Nominal + Real',
+    opt_displayNominal: 'Solo nominal',
+    opt_displayReal: 'Solo real',
+    opt_wealthPortfolio: 'Cartera',
+    opt_wealthExternal: 'Ingresos externos',
+    tab_accum: 'Acumulación',
+    tab_fire: 'Resolución FIRE',
+    hint_buckets: 'Las asignaciones se normalizan al 100%. Los rendimientos y la volatilidad de cada cesta alimentan los modelos de capitalización y Monte Carlo.',
+    hint_fireSolver: 'Encuentra el primer año en que la cartera sostiene la retirada objetivo durante la duración indicada sin agotarse.',
+    hint_marginalRate: 'Usado para la deducción de aportaciones a pensión (límite €1.500/año) y el impuesto sobre retiradas de pensión.',
+    sum_wealthBrackets: 'Tramos del impuesto sobre el patrimonio (estatal)',
+    sum_savingsBrackets: 'Tramos de rentas del ahorro (2026)',
+    stat_finalBalance: 'Saldo Final',
+    stat_contributed: 'Total Aportado',
+    stat_withdrawn: 'Total Retirado (neto)',
+    stat_taxes: 'Total Impuestos Pagados',
+    stat_successRate: 'Tasa de Éxito',
+    stat_medianOutcome: 'Resultado Mediano',
+    stat_worstDrawdown: 'Mayor Caída',
+    stat_medianDepletion: 'Depleción Mediana',
+    sub_pathsSurvived: 'trayectorias supervivientes',
+    sub_peakToTrough: 'máx. pico a valle',
+    sub_failedPaths: 'en trayectorias fallidas',
+    sub_medianP50: 'P50 final',
+    tbl_yearByYear: 'Año a año',
+    tbl_show: 'Mostrar',
+    tbl_hide: 'Ocultar',
+    tbl_year: 'Año',
+    tbl_balance: 'Saldo',
+    tbl_real: 'Real',
+    tbl_contributed: 'Aportado',
+    tbl_withdrawn: 'Retirado (neto)',
+    tbl_capTax: 'Imp. plusvalías',
+    tbl_pensionTax: 'Imp. pensión',
+    dyn_gain: 'ganancia: ',
+    dyn_real: 'real: ',
+    dyn_gross: 'bruto: ',
+    dyn_onGains: 'sobre ganancias realizadas',
+    dyn_pensionSavings: 'ahorro pensión: ',
+    dyn_wealth: 'patrimonio: ',
+    dyn_copied: '¡Copiado!',
+    dyn_fireNotAchievable: 'No alcanzable',
+    dyn_fireHintFail: (target, duration) => `Incluso con 80 años de aportaciones, la cartera no puede sostener €${target}/mes (real) durante ${duration} años con los parámetros actuales. Prueba a aumentar aportaciones, rendimiento o reducir el objetivo.`,
+    dyn_fireYears: (years) => `${years} años de aportaciones`,
+    dyn_fireHintOk: (target, duration) => `…para sostener €${target}/mes (real) durante ${duration} años.`,
+    dyn_noRunsDepleted: 'ninguna simulación agotada',
+    dyn_runsFailed: (n, total) => `${n} de ${total} simulaciones fallidas`,
+    chart_nominal: 'Patrimonio neto (nominal)',
+    chart_real: 'Patrimonio neto (real)',
+    chart_contributed: 'Total aportado',
+    chart_worst: '5 peores trayectorias',
+    chart_overlay: 'Superposición: ',
+    bkt_alloc: 'Asignación %',
+    bkt_return: 'Rendimiento %',
+    bkt_vol: 'Volatilidad %',
+    bkt_type: 'Tipo',
+    bkt_equity: 'Renta variable / ETF',
+    bkt_bond: 'Bonos',
+    bkt_cash: 'Efectivo',
+    bkt_pension: 'Plan de pensiones',
+    exp_oneLabel: 'única',
+    scn_current: '— actual (sin guardar) —',
+  },
+};
+
+const LANG_KEY = 'mony-lang';
+let LANG = localStorage.getItem(LANG_KEY) || 'en';
+
+function t(key) {
+  const tr = TRANSLATIONS[LANG];
+  return (tr && tr[key] !== undefined) ? tr[key] : (TRANSLATIONS.en[key] || key);
+}
+
+function applyLang(lang) {
+  LANG = lang;
+  const tr = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    const val = tr[key];
+    if (val === undefined || typeof val === 'function') return;
+    // Replace first text node only (preserves child elements like help icons and tags)
+    for (const node of el.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        node.textContent = val;
+        return;
+      }
+    }
+    el.prepend(document.createTextNode(val));
+  });
+  document.getElementById('langToggle').textContent = lang === 'en' ? 'ES' : 'EN';
+  document.title = tr.title || 'Net Worth';
+  // Re-render JS-generated UI so bucket/expense labels use the new language
+  if (typeof lastResult !== 'undefined' && lastResult) {
+    const cfg = readConfig();
+    renderBuckets(cfg.buckets);
+    renderExpenses(cfg.expenses);
+    injectHelpIcons();
+    refreshScenarioSelect();
+  }
+  if (chart) render();
+}
+
+document.getElementById('langToggle').onclick = () => {
+  const next = LANG === 'en' ? 'es' : 'en';
+  localStorage.setItem(LANG_KEY, next);
+  applyLang(next);
+};
+
 // Init: load from URL hash if present, else defaults
 if (!loadFromHash()) {
   writeConfig(defaultConfig());
 }
 refreshScenarioSelect();
 injectHelpIcons();
+applyLang(LANG);
 render();
 </script>
 </body>
