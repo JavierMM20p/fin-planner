@@ -1199,13 +1199,17 @@ function solveFire(baseCfg, targetMonthly, durationYears) {
     };
     const accum = simulate(accumCfg);
 
+    // Target is in today's real €. After X years of accumulation, the
+    // equivalent nominal amount is inflated by (1+inflation)^X.
+    const inflateX = Math.pow(1 + (baseCfg.inflation || 0), X);
+
     const withdrawCfg = {
       ...baseCfg,
       initial: accum.finalNominal,
       years: durationYears,
       monthly: 0,
       contribGrowth: 0,
-      withdrawal: targetMonthly,
+      withdrawal: targetMonthly * inflateX,
       withdrawStart: 0,
       withdrawReal: true,
       expenses: [],
@@ -1436,10 +1440,13 @@ document.getElementById('solveFire').onclick = () => {
   if (!res.success) {
     el.className = 'fire-result fail';
     el.innerHTML = `<div class="big">${t('dyn_fireNotAchievable')}</div><div class="hint">${t('dyn_fireHintFail')(cfg.fire.target, cfg.fire.duration)}</div>`;
+    fireMarker = null;
   } else {
     el.className = 'fire-result';
     el.innerHTML = `<div class="big">${t('dyn_fireYears')(res.years)}</div><div class="hint">${t('dyn_fireHintOk')(cfg.fire.target, cfg.fire.duration)}</div>`;
+    fireMarker = { years: res.years, target: cfg.fire.target, duration: cfg.fire.duration };
   }
+  render();
 };
 
 // =====================================================================
@@ -1552,10 +1559,52 @@ function renderOverlayChips() {
 // =====================================================================
 const ctx = document.getElementById('chart').getContext('2d');
 let chart;
+
+// Custom plugin: draws a vertical line at the FIRE year on the chart.
+const fireMarkerPlugin = {
+  id: 'fireMarker',
+  afterDatasetsDraw(chart, args, opts) {
+    const m = opts && opts.marker;
+    if (!m) return;
+    const xScale = chart.scales.x;
+    const yScale = chart.scales.y;
+    if (!xScale || !yScale) return;
+    const labelIdx = chart.data.labels.indexOf('Y' + m.years);
+    if (labelIdx < 0) return;
+    const x = xScale.getPixelForValue(labelIdx);
+    const top = yScale.top;
+    const bottom = yScale.bottom;
+    const c = chart.ctx;
+    c.save();
+    c.strokeStyle = opts.color || '#b4823f';
+    c.lineWidth = 2;
+    c.setLineDash([6, 4]);
+    c.beginPath();
+    c.moveTo(x, top);
+    c.lineTo(x, bottom);
+    c.stroke();
+    c.setLineDash([]);
+    // label
+    const label = (opts.labelText || 'FIRE') + ' Y' + m.years;
+    c.font = '600 12px Inter';
+    const w = c.measureText(label).width + 10;
+    const h = 20;
+    const bx = Math.min(x + 6, xScale.right - w);
+    const by = top + 6;
+    c.fillStyle = opts.color || '#b4823f';
+    c.fillRect(bx, by, w, h);
+    c.fillStyle = '#fff';
+    c.textBaseline = 'middle';
+    c.fillText(label, bx + 5, by + h / 2);
+    c.restore();
+  },
+};
+Chart.register(fireMarkerPlugin);
 const fmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const fmtD = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
 
 let lastResult = null;
+let fireMarker = null; // { years, target, duration } or null
 
 function render() {
   const cfg = readConfig();
@@ -1761,6 +1810,11 @@ function render() {
           callbacks: {
             label: (c) => ' ' + c.dataset.label + ': ' + fmtD.format(c.parsed.y),
           },
+        },
+        fireMarker: {
+          marker: (fireMarker && fireMarker.years <= cfg.years) ? fireMarker : null,
+          color: CL.accent2 || '#b4823f',
+          labelText: t('dyn_fireMarkerLabel') || 'FIRE',
         },
       },
       scales: {
@@ -2558,6 +2612,7 @@ const TRANSLATIONS = {
     dyn_fireHintFail: (target, duration) => `Even at 80 years of contributions, the portfolio can't sustain €${target}/mo (real) for ${duration} years with current parameters. Try raising contributions or return rate, or lowering the target.`,
     dyn_fireYears: (years) => `${years} years of contributions`,
     dyn_fireHintOk: (target, duration) => `…to sustain €${target}/mo (real) for ${duration} years.`,
+    dyn_fireMarkerLabel: 'FIRE',
     dyn_noRunsDepleted: 'no runs depleted',
     dyn_runsFailed: (n, total) => `${n} of ${total} runs failed`,
     chart_nominal: 'Net worth (nominal)',
@@ -2671,6 +2726,7 @@ const TRANSLATIONS = {
     dyn_fireHintFail: (target, duration) => `Incluso con 80 años de aportaciones, la cartera no puede sostener €${target}/mes (real) durante ${duration} años con los parámetros actuales. Prueba a aumentar aportaciones, rendimiento o reducir el objetivo.`,
     dyn_fireYears: (years) => `${years} años de aportaciones`,
     dyn_fireHintOk: (target, duration) => `…para sostener €${target}/mes (real) durante ${duration} años.`,
+    dyn_fireMarkerLabel: 'FIRE',
     dyn_noRunsDepleted: 'ninguna simulación agotada',
     dyn_runsFailed: (n, total) => `${n} de ${total} simulaciones fallidas`,
     chart_nominal: 'Patrimonio neto (nominal)',
