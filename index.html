@@ -1937,8 +1937,7 @@ function defaultConfig() {
     contribGrowth: 0,
     years: 30,
     buckets: [
-      { name: 'Global ETF', allocation: 0.8, rate: 0.08, vol: 0.16, type: 'equity' },
-      { name: 'Bonds', allocation: 0.2, rate: 0.03, vol: 0.05, type: 'bond' },
+      { name: 'Global ETF', allocation: 1.0, rate: 0.08, vol: 0.16, type: 'equity' },
     ],
     rebalance: false,
     inflationOn: true,
@@ -2195,12 +2194,240 @@ const HELP = {
   },
 };
 
+const HELP_ES = {
+  scenarios: {
+    title: "Escenarios",
+    body: `<p>Un <strong>escenario</strong> es una instantánea completa de todos tus ajustes — aportación, cestas, inflación, gastos, todo. Guardarlo te permite volver más tarde o comparar diferentes planes.</p>
+           <p>Usa <em>Superponer</em> para representar un escenario guardado <strong>sobre</strong> el actual, y comparar visualmente setups "agresivos" vs "conservadores" en el mismo gráfico.</p>
+           <p>Los escenarios se guardan en el almacenamiento local del navegador. Exporta a JSON si quieres hacer una copia de seguridad o trasladarlos a otro dispositivo.</p>`,
+  },
+  portfolio: {
+    title: "Conceptos básicos de cartera",
+    body: `<p>Tu cartera es el conjunto de dinero que crece con el tiempo gracias a los rendimientos de la inversión y mengua con las retiradas o gastos.</p>
+           <p>Los tres parámetros principales definen cómo <strong>empieza</strong>, cómo <strong>crece con tus ahorros</strong> y <strong>cuánto tiempo</strong> dura la simulación.</p>`,
+  },
+  initial: {
+    title: "Capital inicial",
+    body: `<p>El dinero con el que comienzas — lo que ya tienes en tu cuenta de broker, ahorros o inversiones en el <strong>mes cero</strong> de la simulación.</p>
+           <p>Se reparte entre tus cestas de activos según sus porcentajes de asignación y empieza a capitalizarse desde el primer día.</p>
+           <p><strong>Ejemplo:</strong> si hoy tienes <code>€10.000</code> en un ETF, introduce <code>10000</code>.</p>`,
+  },
+  monthly: {
+    title: "Aportación mensual",
+    body: `<p>La cantidad que planeas <strong>añadir a tu cartera cada mes</strong> de tu salario o ahorros. Esta es la clave del interés compuesto — las aportaciones regulares importan más que el capital inicial en horizontes largos.</p>
+           <p>La aportación se reparte mensualmente entre tus cestas según sus asignaciones objetivo.</p>`,
+  },
+  contribGrowth: {
+    title: "Crecimiento de aportación",
+    body: `<p>Cuánto aumenta tu aportación mensual <strong>cada año</strong>, en porcentaje. Modela el crecimiento de tu salario — puedes permitirte invertir más a medida que ganas más.</p>
+           <p>Deja en <code>0</code> para una aportación fija. Pon <code>3</code> si esperas aumentar el ahorro un 3% anual (aproximadamente a la par con la inflación).</p>`,
+  },
+  years: {
+    title: "Horizonte de simulación",
+    body: `<p>Cuántos años simular. El interés compuesto es exponencial, por lo que la diferencia entre 20 y 40 años es dramática — no el doble, sino aproximadamente el cuádruple.</p>
+           <p>Para planificación de jubilación, pon <strong>tu edad deseada de jubilación menos tu edad actual</strong>, por ejemplo 40 años si tienes 25 y quieres ver el panorama hasta los 65.</p>`,
+  },
+  buckets: {
+    title: "Cestas de activos",
+    body: `<p>Una <strong>cesta de activos</strong> es un grupo de inversiones con comportamiento similar — un ETF global de acciones, bonos del estado, efectivo, un plan de pensiones. Cada una tiene su rentabilidad esperada y su volatilidad.</p>
+           <p>Distribuyes el dinero entre cestas usando <strong>asignaciones</strong> (porcentajes que suman 100%). Una mezcla clásica es <code>80% renta variable / 20% bonos</code> — mayor rentabilidad esperada de las acciones, amortiguada por la mayor estabilidad de los bonos.</p>
+           <p>¿Por qué varias cestas? Diferentes activos tienen distintas rentabilidades, distintos riesgos y distinto tratamiento fiscal. Modelarlos por separado da proyecciones mucho más realistas.</p>`,
+  },
+  allocation: {
+    title: "% de asignación",
+    body: `<p>Qué parte de tu dinero va a esta cesta. Si tienes dos cestas a <code>80</code> y <code>20</code>, el 80% de cada aportación (y el 80% de tu capital inicial) va a la primera cesta.</p>
+           <p>Las asignaciones se normalizan automáticamente, por lo que <code>80/20</code> y <code>4/1</code> producen el mismo resultado.</p>`,
+  },
+  return: {
+    title: "Rentabilidad esperada",
+    body: `<p>La <strong>rentabilidad media anual</strong> que esperas de esta cesta, en porcentaje. Referencias históricas:</p>
+           <ul>
+             <li>Índice global de acciones (S&P 500, MSCI World): ~<code>8%</code></li>
+             <li>Bonos del estado: ~<code>3%</code></li>
+             <li>Efectivo / cuenta de ahorro: ~<code>2%</code></li>
+           </ul>
+           <p>Las rentabilidades pasadas no garantizan las futuras — usa Monte Carlo con volatilidad para ver el rango de resultados posibles.</p>`,
+  },
+  volatility: {
+    title: "Volatilidad",
+    body: `<p>Cuánto varía la rentabilidad anual <strong>de año en año</strong>, como desviación típica. La volatilidad no cambia la media, pero hace el camino más accidentado — algunos años sube un 30%, otros baja un 20%.</p>
+           <p>Solo la usa la simulación Monte Carlo. Valores típicos:</p>
+           <ul>
+             <li>Acciones globales: ~<code>15–18%</code></li>
+             <li>Bonos: ~<code>5%</code></li>
+             <li>Efectivo: ~<code>1%</code></li>
+           </ul>
+           <p>Mayor volatilidad significa un "cono de incertidumbre" más amplio en tu proyección.</p>`,
+  },
+  bucketType: {
+    title: "Tipo de cesta",
+    body: `<p>Afecta a cómo se <strong>tributa la cesta en España</strong>:</p>
+           <ul>
+             <li><strong>Renta variable / Bonos / Efectivo:</strong> tributan como ganancias patrimoniales al vender (19–30% progresivo sobre la ganancia).</li>
+             <li><strong>Plan de pensiones:</strong> las aportaciones de hasta €1.500/año te dan una <strong>deducción en el IRPF hoy</strong> (reflejada como "ahorro pensión"). Pero al rescatar, <strong>el importe íntegro</strong> —no solo la ganancia— tributa como rendimiento del trabajo a tu tipo marginal.</li>
+           </ul>
+           <p>Los planes de pensiones son una apuesta a que tu tipo marginal en la jubilación será inferior al actual.</p>`,
+  },
+  rebalance: {
+    title: "Rebalanceo anual",
+    body: `<p>Con el tiempo, las cestas se desvían de sus asignaciones objetivo — si las acciones crecen más que los bonos, tu cartera "80/20" puede convertirse en "90/10". El rebalanceo vende de las cestas sobreasignadas y compra en las infraasignadas para restaurar los objetivos.</p>
+           <p><strong>Importante:</strong> el rebalanceo <em>realiza</em> plusvalías, por lo que <strong>genera un hecho imponible</strong> en una cuenta sujeta a tributación. La simulación modela este coste — verás impuestos pagados cada año incluso sin retiradas activas.</p>`,
+  },
+  inflation: {
+    title: "Inflación",
+    body: `<p>La inflación es la <strong>erosión del poder adquisitivo</strong> con el tiempo. €100 hoy compran más que €100 dentro de 30 años.</p>
+           <p>La simulación rastrea dos valores:</p>
+           <ul>
+             <li><strong>Nominal:</strong> euros brutos en tu cuenta.</li>
+             <li><strong>Real:</strong> nominal ajustado por inflación — "qué compraría esta cantidad a precios de hoy".</li>
+           </ul>
+           <p>El valor real es la perspectiva más honesta en horizontes largos. Una cartera nominal de <code>€1M</code> en 40 años con una inflación del 2,5% solo vale ~<code>€370k</code> en términos de poder adquisitivo actual.</p>`,
+  },
+  inflationOn: {
+    title: "Ajustar por inflación",
+    body: `<p>Cuando está activado, la simulación rastrea un valor real (ajustado por inflación) junto al nominal. Desactiva si quieres razonar en euros nominales.</p>`,
+  },
+  displayMode: {
+    title: "Modo de visualización",
+    body: `<p>Qué líneas mostrar en el gráfico:</p>
+           <ul>
+             <li><strong>Nominal + Real:</strong> ambas líneas en paralelo (recomendado).</li>
+             <li><strong>Solo nominal:</strong> importes en euros brutos.</li>
+             <li><strong>Solo real:</strong> poder adquisitivo en dinero actual.</li>
+           </ul>`,
+  },
+  montecarlo: {
+    title: "Simulación Monte Carlo",
+    body: `<p>Una única línea proyectada es engañosa — asume que tu cartera obtiene exactamente la rentabilidad media cada año, lo cual nunca ocurre en la realidad.</p>
+           <p>Monte Carlo ejecuta la simulación <strong>cientos de veces</strong>, cada una con una trayectoria de rentabilidades diferente generada aleatoriamente a partir de la rentabilidad esperada y la volatilidad de cada cesta. El resultado es un <strong>rango</strong> de resultados:</p>
+           <ul>
+             <li><strong>P10:</strong> solo el 10% de las simulaciones terminaron por debajo de esta línea (caso adverso).</li>
+             <li><strong>P50 (mediana):</strong> la mitad terminaron por encima, la mitad por debajo.</li>
+             <li><strong>P90:</strong> solo el 10% terminaron por encima de esta línea (caso favorable).</li>
+           </ul>
+           <p>La brecha entre P10 y P90 indica cuánta <strong>incertidumbre</strong> hay en la proyección. Una brecha amplia significa que necesitas un margen de seguridad.</p>`,
+  },
+  mcRuns: {
+    title: "Número de simulaciones",
+    body: `<p>Cuántas trayectorias generadas aleatoriamente simular. Más simulaciones = bandas de percentiles más suaves y precisas, pero más lentas.</p>
+           <p><code>200–500</code> está bien para exploración rápida. <code>1000+</code> si quieres percentiles de mayor calidad.</p>`,
+  },
+  mcSeed: {
+    title: "Semilla aleatoria",
+    body: `<p>Un número que inicializa el generador de números aleatorios. Usar la <strong>misma semilla</strong> produce <strong>el mismo resultado de Monte Carlo</strong> cada vez — útil para reproducibilidad y comparar escenarios de forma justa.</p>
+           <p>Cambia la semilla para obtener un nuevo conjunto de trayectorias aleatorias.</p>`,
+  },
+  mode: {
+    title: "Modo de simulación",
+    body: `<p><strong>Acumulación:</strong> tú fijas una cantidad de retirada y un año de inicio, y ves la trayectoria resultante. Ideal para "¿qué pasa si me jubilo a los 55 y necesito €2.000/mes?".</p>
+           <p><strong>Resolución FIRE:</strong> el problema inverso — tú fijas una retirada objetivo y una duración, y la herramienta <strong>encuentra el primer año</strong> en que puedes empezar sin quedarte sin dinero. Ideal para "¿cuándo puedo jubilarme?".</p>`,
+  },
+  withdrawal: {
+    title: "Retirada mensual",
+    body: `<p>Cuánto retiras de tu cartera cada mes una vez que empiezan las retiradas. La simulación vende de todas las cestas proporcionalmente para financiarlo.</p>
+           <p>En España, la parte de ganancia de cada retirada tributa de forma progresiva (19–30%). Para cestas de tipo pensión, el importe íntegro tributa como renta del trabajo.</p>`,
+  },
+  withdrawStart: {
+    title: "Año de inicio de retirada",
+    body: `<p>El año en que dejas de aportar y empiezas a retirar. Antes de este año: estás acumulando. Después: vives de la cartera.</p>
+           <p><strong>Nota:</strong> las aportaciones continúan hasta este punto por defecto. Si quieres dejar de aportar antes, pon la aportación mensual a 0.</p>`,
+  },
+  withdrawReal: {
+    title: "Mantener retirada real",
+    body: `<p>Cuando está activado, tu cantidad de retirada <strong>crece con la inflación</strong> — preservas el mismo <em>poder adquisitivo</em> cada año. €2.000/mes hoy se convierten en ~€3.280 nominales en 20 años al 2,5% de inflación.</p>
+           <p>Esta es la opción realista para planificar la jubilación — la cesta de la compra también sube.</p>`,
+  },
+  fireTarget: {
+    title: "Objetivo de retirada FIRE",
+    body: `<p>Los ingresos mensuales que quieres sostener en la jubilación, expresados en <strong>poder adquisitivo actual</strong>. El solver encontrará cuánto tiempo necesitas seguir aportando para que sea sostenible.</p>
+           <p><strong>Regla general:</strong> con una tasa de retirada segura del 4%, €2.500/mes requiere una cartera de ~€750.000 (real).</p>`,
+  },
+  fireDuration: {
+    title: "Duración FIRE",
+    body: `<p>Cuántos años deben durar las retiradas. Para una jubilación tradicional a los 65, usa <code>25–30</code> años. Para jubilación anticipada a los 45, usa <code>40+</code> años.</p>
+           <p>Duraciones más largas dificultan el FIRE — tu cartera tiene que sobrevivir más secuencias de malos años de mercado.</p>`,
+  },
+  expenses: {
+    title: "Gastos",
+    body: `<p>Dinero que sale de la cartera en momentos específicos:</p>
+           <ul>
+             <li><strong>Puntual:</strong> una salida única en un mes concreto — coche, boda, entrada de una casa.</li>
+             <li><strong>Recurrente:</strong> una salida mensual entre dos meses — alquiler, matrícula, manutención de familiares. Opcionalmente indexada a la inflación para que crezca con el tiempo.</li>
+           </ul>
+           <p>Ambos se financian <strong>vendiendo</strong> de tu cartera, lo que realiza plusvalías y puede generar impuesto.</p>
+           <p>El mes número <code>1</code> = primer mes, <code>12</code> = fin del año 1, <code>120</code> = fin del año 10.</p>`,
+  },
+  taxes: {
+    title: "Impuestos españoles",
+    body: `<p>La simulación modela el régimen fiscal español de 2026:</p>
+           <p><strong>Rentas del ahorro (ganancias patrimoniales) — progresivo:</strong></p>
+           <ul>
+             <li>0 – 6.000 €: <code>19%</code></li>
+             <li>6.000 – 50.000 €: <code>21%</code></li>
+             <li>50.000 – 200.000 €: <code>23%</code></li>
+             <li>200.000 – 300.000 €: <code>27%</code></li>
+             <li>Más de 300.000 €: <code>30%</code></li>
+           </ul>
+           <p>Los tramos se aplican a las <strong>ganancias acumuladas del año</strong> — vender más en el mismo año te empuja a tramos superiores.</p>
+           <p>Los rescates de pensión tributan como <strong>rendimientos del trabajo</strong> a tu tipo marginal, no como ganancias patrimoniales.</p>`,
+  },
+  taxOn: {
+    title: "Aplicar impuesto sobre plusvalías",
+    body: `<p>Desactiva para ver una proyección antes de impuestos (útil para comparar estrategias). Cuando está activado, cada retirada y gasto genera impuesto sobre la parte de ganancia.</p>`,
+  },
+  fifoLots: {
+    title: "Seguimiento FIFO de lotes",
+    body: `<p>Cuando vendes parte de tu cartera, ¿qué "participaciones" se consideran vendidas — las compradas primero, o un promedio?</p>
+           <p><strong>FIFO (primero en entrar, primero en salir):</strong> las participaciones compradas <em>antes</em> se venden primero. Esto es lo que exige la legislación fiscal española. Como las participaciones antiguas han tenido más tiempo para revalorizarse, tienen las mayores ganancias — así que FIFO tiende a generar <strong>más impuesto</strong> en los primeros años de retirada.</p>
+           <p><strong>Proporcional (desactivado):</strong> una aproximación más sencilla en la que cada venta realiza una parte proporcional de las ganancias totales. Menos preciso pero más fácil de entender.</p>`,
+  },
+  showWorstPaths: {
+    title: "5 peores trayectorias (riesgo de secuencia)",
+    body: `<p>Una banda de Monte Carlo muestra el <em>rango</em> de resultados finales, pero oculta un riesgo crítico: <strong>cuándo</strong> ocurren los malos rendimientos importa mucho más que su promedio.</p>
+           <p>Una cartera que pierde un 30% en el primer año de jubilación y luego se recupera está en serios apuros — estás vendiendo participaciones a precios bajos. Los <strong>mismos rendimientos en orden inverso</strong> (buenos primero, malos al final) te dejarían bien.</p>
+           <p>Este interruptor superpone las <strong>cinco peores trayectorias</strong> como líneas rojas finas, para que puedas ver las secuencias donde las cosas salieron mal. Útil para identificar trayectorias que se agotan pronto.</p>`,
+  },
+  wealthTax: {
+    title: "Impuesto sobre el Patrimonio",
+    body: `<p>España aplica un impuesto anual sobre el <strong>patrimonio neto total por encima de un umbral de exención</strong> (normalmente €700.000). A diferencia del impuesto sobre plusvalías, se paga cada año sobre el saldo en sí, no sobre las ganancias realizadas.</p>
+           <p>Los tipos son progresivos (0,2% a 3,5%) y <strong>varían por comunidad autónoma</strong> — Madrid aplica una bonificación del 100% (efectivamente 0%), mientras que Cataluña, Asturias y otras aplican la escala estatal completa. La app usa el baremo estatal; ajusta tus expectativas según tu comunidad.</p>
+           <p>En horizontes largos esto puede ser un <strong>lastre significativo</strong>: una cartera de €2M paga unos €10.000–15.000/año. Capitalizado, son cientos de miles de euros.</p>`,
+  },
+  wealthTaxOn: {
+    title: "Aplicar impuesto sobre el patrimonio",
+    body: `<p>Activa para modelar el impuesto sobre el patrimonio anual a fin de año, basado en el valor total de la cartera menos la exención.</p>
+           <p>Desactiva si resides en una comunidad con bonificación total (Madrid, Andalucía actualmente) o si esperas que el impuesto se suprima.</p>`,
+  },
+  wealthExemption: {
+    title: "Exención del impuesto sobre el patrimonio",
+    body: `<p>El importe del patrimonio neto que <strong>no tributa</strong>. El baremo estatal es €700.000 por persona. La vivienda habitual está adicionalmente exenta hasta €300.000 — si aplica, pon la exención en €1.000.000.</p>
+           <p>Todo lo que supere esta cantidad entra en los tramos progresivos.</p>`,
+  },
+  wealthFromPortfolio: {
+    title: "Fuente de financiación del impuesto sobre el patrimonio",
+    body: `<p><strong>Desde cartera:</strong> el impuesto se paga vendiendo activos, lo que realiza plusvalías y desencadena impuesto adicional. Lo más realista si no tienes ingresos externos.</p>
+           <p><strong>Ingresos externos:</strong> lo pagas con salario u otros ingresos. La cartera se reduce por el importe del impuesto pero no hay venta, por lo que no hay efecto cascada de plusvalías.</p>
+           <p>Para jubilados que viven de la cartera, elige "desde cartera". Para profesionales en activo, "externos" es más realista.</p>`,
+  },
+  marginalRate: {
+    title: "Tipo marginal del IRPF",
+    body: `<p>Tu <strong>tramo superior del IRPF</strong> — el tipo aplicado al siguiente euro de salario que ganas. En España, según la comunidad autónoma, suele ser:</p>
+           <ul>
+             <li><code>~24%</code> para rentas medias (~€35.000/año)</li>
+             <li><code>~37%</code> para rentas medio-altas (~€60.000/año)</li>
+             <li><code>~45–47%</code> para rentas altas (~€150.000+)</li>
+           </ul>
+           <p>Se usa para dos cosas: <strong>(1)</strong> el ahorro fiscal que obtienes por aportaciones a pensión hoy (hasta €1.500/año), y <strong>(2)</strong> el impuesto que pagarás al rescatar la pensión.</p>`,
+  },
+};
+
 // Modal controller
 const helpModal = document.getElementById('helpModal');
 const helpTitle = document.getElementById('helpTitle');
 const helpBody = document.getElementById('helpBody');
 function openHelp(key) {
-  const entry = HELP[key];
+  const dict = LANG === 'es' ? HELP_ES : HELP;
+  const entry = dict[key] || HELP[key];
   if (!entry) return;
   helpTitle.textContent = entry.title;
   helpBody.innerHTML = entry.body;
@@ -2465,7 +2692,7 @@ const TRANSLATIONS = {
 };
 
 const LANG_KEY = 'mony-lang';
-let LANG = localStorage.getItem(LANG_KEY) || 'en';
+let LANG = localStorage.getItem(LANG_KEY) || 'es';
 
 function t(key) {
   const tr = TRANSLATIONS[LANG];
