@@ -462,9 +462,15 @@
         <input type="number" id="contribGrowth" value="0" step="0.5" />
       </div>
     </div>
-    <div class="field">
-      <label data-help="years" data-i18n="lbl_years">Years</label>
-      <input type="number" id="years" value="30" step="1" min="1" max="80" />
+    <div class="row">
+      <div>
+        <label data-help="years" data-i18n="lbl_years">Simulation years</label>
+        <input type="number" id="years" value="40" step="1" min="1" max="80" />
+      </div>
+      <div>
+        <label data-help="contribYears" data-i18n="lbl_contribYears">Contribution years</label>
+        <input type="number" id="contribYears" value="20" step="1" min="0" max="80" />
+      </div>
     </div>
 
     <h2 data-help="buckets" data-i18n="sec_buckets">Asset buckets</h2>
@@ -849,6 +855,9 @@ function sell(b, amount, useFifo) {
 // =====================================================================
 function simulate(cfg, rateOverrides = null) {
   const months = cfg.years * 12;
+  // Contributions stop after `contribYears`. Missing/null means "contribute
+  // for the whole horizon" so older saved scenarios keep their old behaviour.
+  const contribMonths = (cfg.contribYears == null ? cfg.years : cfg.contribYears) * 12;
   const infM = Math.pow(1 + cfg.inflation, 1 / 12) - 1;
   const contribGrowthM = Math.pow(1 + cfg.contribGrowth, 1 / 12) - 1;
 
@@ -950,8 +959,8 @@ function simulate(cfg, rateOverrides = null) {
       grow(b, rate);
     }
 
-    // 2. Contribution (split by allocation)
-    if (contribution > 0) {
+    // 2. Contribution (split by allocation) — only while still contributing
+    if (contribution > 0 && m <= contribMonths) {
       for (const b of buckets) {
         const amt = contribution * b.cfg.allocationNorm;
         buy(b, amt);
@@ -1193,6 +1202,7 @@ function solveFire(baseCfg, targetMonthly, durationYears) {
     const accumCfg = {
       ...baseCfg,
       years: X,
+      contribYears: X,   // the solver's whole point is "contribute until year X"
       withdrawal: 0,
       withdrawStart: 0,
       expenses: [],
@@ -1207,6 +1217,7 @@ function solveFire(baseCfg, targetMonthly, durationYears) {
       ...baseCfg,
       initial: accum.finalNominal,
       years: durationYears,
+      contribYears: 0,
       monthly: 0,
       contribGrowth: 0,
       withdrawal: targetMonthly * inflateX,
@@ -1237,6 +1248,7 @@ function readConfig() {
     monthly: parseFloat(v('monthly')) || 0,
     contribGrowth: (parseFloat(v('contribGrowth')) || 0) / 100,
     years: parseInt(v('years')) || 1,
+    contribYears: Math.max(0, parseInt(v('contribYears')) || 0),
     buckets: readBuckets(),
     rebalance: c('rebalance'),
     inflationOn: c('inflationOn'),
@@ -1270,6 +1282,7 @@ function writeConfig(cfg) {
   setV('monthly', cfg.monthly);
   setV('contribGrowth', cfg.contribGrowth * 100);
   setV('years', cfg.years);
+  setV('contribYears', cfg.contribYears == null ? cfg.years : cfg.contribYears);
   setC('rebalance', cfg.rebalance);
   setC('inflationOn', cfg.inflationOn);
   setV('inflation', cfg.inflation * 100);
@@ -1479,7 +1492,7 @@ document.getElementById('loadScenario').onclick = () => {
   if (!name) return;
   const store = loadStore();
   if (!store[name]) return;
-  writeConfig({ ...defaultConfig(), ...store[name] });
+  writeConfig(withDefaults(store[name]));
   render();
 };
 document.getElementById('deleteScenario').onclick = () => {
@@ -1512,7 +1525,7 @@ document.getElementById('importFile').addEventListener('change', (ev) => {
         Object.assign(store, data.scenarios);
         saveStore(store);
       }
-      if (data.current) writeConfig({ ...defaultConfig(), ...data.current });
+      if (data.current) writeConfig(withDefaults(data.current));
       refreshScenarioSelect();
       render();
     } catch (e) {
@@ -1532,7 +1545,7 @@ document.getElementById('overlayScenario').onclick = () => {
   const raw = store[name];
   if (!raw) return;
   if (overlays.find(o => o.name === name)) return;
-  const cfg = { ...defaultConfig(), ...raw };
+  const cfg = withDefaults(raw);
   const color = OVERLAY_COLORS[overlays.length % OVERLAY_COLORS.length];
   overlays.push({ name, cfg, color });
   renderOverlayChips();
@@ -1964,7 +1977,7 @@ function loadFromHash() {
   const cfg = decodeConfig(m[1]);
   if (!cfg) return false;
   // Merge with defaults so older hashes missing new fields still work
-  writeConfig({ ...defaultConfig(), ...cfg });
+  writeConfig(withDefaults(cfg));
   return true;
 }
 document.getElementById('copyLink').onclick = () => {
@@ -1989,7 +2002,8 @@ function defaultConfig() {
     initial: 10000,
     monthly: 500,
     contribGrowth: 0,
-    years: 30,
+    years: 40,
+    contribYears: 20,
     buckets: [
       { name: 'Global ETF', allocation: 1.0, rate: 0.08, vol: 0.16, type: 'equity' },
     ],
@@ -2016,6 +2030,15 @@ function defaultConfig() {
     ],
     fire: { target: 2500, duration: 30 },
   };
+}
+
+// Merge a stored/shared config over the defaults. Configs saved before
+// contribution years existed contributed for the whole horizon, so backfill
+// contribYears from their own `years` rather than taking the new default.
+function withDefaults(cfg) {
+  const merged = { ...defaultConfig(), ...cfg };
+  if (cfg && cfg.contribYears == null) merged.contribYears = merged.years;
+  return merged;
 }
 
 // =====================================================================
@@ -2052,7 +2075,14 @@ const HELP = {
   years: {
     title: "Simulation horizon",
     body: `<p>How many years to simulate. Compound interest is exponential, so the difference between 20 and 40 years is dramatic — not double, but roughly quadruple.</p>
-           <p>For retirement planning, set this to <strong>your expected age minus your current age</strong>, e.g. 40 years if you're 25 and want to see a picture through age 65.</p>`,
+           <p>For retirement planning, set this to <strong>your expected age minus your current age</strong>, e.g. 40 years if you're 25 and want to see a picture through age 65.</p>
+           <p>This is independent of <strong>contribution years</strong> — you can simulate 50 years while only paying in for the first 20.</p>`,
+  },
+  contribYears: {
+    title: "Contribution years",
+    body: `<p>How many years you actually <strong>pay into</strong> the portfolio. After this many years the monthly contribution stops, and the portfolio keeps compounding (and paying out withdrawals and expenses) on its own.</p>
+           <p>This is what lets you model <strong>retiring</strong>: simulate 45 years, contribute for the first 20, and set your monthly withdrawal to start at year 20. The remaining 25 years show whether the portfolio survives living off it.</p>
+           <p>Set it equal to the simulation horizon to contribute the whole way through. Set it to <code>0</code> to model a lump sum with no further contributions.</p>`,
   },
   buckets: {
     title: "Asset buckets",
@@ -2279,7 +2309,14 @@ const HELP_ES = {
   years: {
     title: "Horizonte de simulación",
     body: `<p>Cuántos años simular. El interés compuesto es exponencial, por lo que la diferencia entre 20 y 40 años es dramática — no el doble, sino aproximadamente el cuádruple.</p>
-           <p>Para planificación de jubilación, pon <strong>tu edad deseada de jubilación menos tu edad actual</strong>, por ejemplo 40 años si tienes 25 y quieres ver el panorama hasta los 65.</p>`,
+           <p>Para planificación de jubilación, pon <strong>tu edad deseada de jubilación menos tu edad actual</strong>, por ejemplo 40 años si tienes 25 y quieres ver el panorama hasta los 65.</p>
+           <p>Es independiente de los <strong>años de aportación</strong> — puedes simular 50 años aportando solo durante los primeros 20.</p>`,
+  },
+  contribYears: {
+    title: "Años de aportación",
+    body: `<p>Cuántos años <strong>aportas</strong> realmente a la cartera. Pasados esos años la aportación mensual se detiene y la cartera sigue capitalizando por su cuenta (y pagando retiradas y gastos).</p>
+           <p>Esto es lo que permite modelar la <strong>jubilación</strong>: simula 45 años, aporta durante los primeros 20 y haz que la retirada mensual empiece en el año 20. Los 25 años restantes muestran si la cartera aguanta viviendo de ella.</p>
+           <p>Ponlo igual al horizonte de simulación para aportar durante todo el periodo. Ponlo a <code>0</code> para modelar un capital único sin aportaciones.</p>`,
   },
   buckets: {
     title: "Cestas de activos",
@@ -2532,7 +2569,8 @@ const TRANSLATIONS = {
     lbl_initial: 'Initial capital (€)',
     lbl_monthly: 'Monthly contribution (€)',
     lbl_contribGrowth: 'Contribution growth / year (%)',
-    lbl_years: 'Years',
+    lbl_years: 'Simulation years',
+    lbl_contribYears: 'Contribution years',
     lbl_inflation: 'Annual inflation (%)',
     lbl_display: 'Display',
     lbl_mcRuns: 'Runs',
@@ -2646,7 +2684,8 @@ const TRANSLATIONS = {
     lbl_initial: 'Capital inicial (€)',
     lbl_monthly: 'Aportación mensual (€)',
     lbl_contribGrowth: 'Crecimiento aportación / año (%)',
-    lbl_years: 'Años',
+    lbl_years: 'Años de simulación',
+    lbl_contribYears: 'Años de aportación',
     lbl_inflation: 'Inflación anual (%)',
     lbl_display: 'Mostrar',
     lbl_mcRuns: 'Simulaciones',

@@ -114,7 +114,8 @@ To use offline, download the file and substitute local copies of Chart.js and th
 | Initial capital | Starting portfolio value in euros |
 | Monthly contribution | Regular monthly addition to the portfolio |
 | Contribution growth | Annual percentage increase in monthly contribution |
-| Years | Simulation horizon |
+| Simulation years | Simulation horizon |
+| Contribution years | How many years the monthly contribution is paid in; after this the portfolio compounds (and pays out) with no further contributions. Set below the horizon to model retiring and living off the portfolio. |
 | Asset buckets | Name, allocation weight, expected annual return, annual volatility, type |
 | Rebalance annually | Whether to rebalance to target weights at year-end (triggers tax events) |
 | Adjust for inflation | Whether to deflate portfolio values to real terms |
